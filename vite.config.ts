@@ -1,3 +1,4 @@
+/* eslint-disable node/prefer-global/process */
 import path from 'node:path'
 import VueI18n from '@intlify/unplugin-vue-i18n/vite'
 import Shiki from '@shikijs/markdown-it'
@@ -15,7 +16,6 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import Layouts from 'vite-plugin-vue-layouts'
-import generateSitemap from 'vite-ssg-sitemap'
 import 'vitest/config'
 
 export default defineConfig({
@@ -23,6 +23,36 @@ export default defineConfig({
     alias: {
       '~/': `${path.resolve(__dirname, 'src')}/`,
       '@/': `${path.resolve(__dirname, 'src')}/`,
+    },
+  },
+
+  // Proxy API requests to backend services during development
+  server: {
+    proxy: {
+      // Proxy to Analysis Manager
+      '/analysismanager': {
+        target:
+          process.env.VITE_ANALYSIS_MANAGER_URL || 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/analysismanager/, ''),
+      },
+      // Proxy to Express server for file operations
+      '/upload': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/upload-multiple': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/tadms': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/move-to-tadms': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
 
@@ -59,10 +89,7 @@ export default defineConfig({
         },
       ],
       dts: 'src/auto-imports.d.ts',
-      dirs: [
-        'src/composables',
-        'src/stores',
-      ],
+      dirs: ['src/composables', 'src/stores'],
       vueTemplate: true,
     }),
 
@@ -92,13 +119,15 @@ export default defineConfig({
             rel: 'noopener',
           },
         })
-        md.use(await Shiki({
-          defaultColor: false,
-          themes: {
-            light: 'vitesse-light',
-            dark: 'vitesse-dark',
-          },
-        }))
+        md.use(
+          await Shiki({
+            defaultColor: false,
+            themes: {
+              light: 'vitesse-light',
+              dark: 'vitesse-dark',
+            },
+          }),
+        )
       },
     }),
 
@@ -147,22 +176,5 @@ export default defineConfig({
   test: {
     include: ['test/**/*.test.ts'],
     environment: 'jsdom',
-  },
-
-  // https://github.com/antfu/vite-ssg
-  ssgOptions: {
-    script: 'async',
-    formatting: 'minify',
-    beastiesOptions: {
-      reduceInlineStyles: false,
-    },
-    onFinished() {
-      generateSitemap()
-    },
-  },
-
-  ssr: {
-    // TODO: workaround until they support native ESM
-    noExternal: ['workbox-window', /vue-i18n/],
   },
 })

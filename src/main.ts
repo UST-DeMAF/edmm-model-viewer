@@ -1,7 +1,11 @@
-import type { UserModule } from './types'
-
+import messages from '@intlify/unplugin-vue-i18n/messages'
+import { createHead } from '@unhead/vue/client'
+import NProgress from 'nprogress'
+import { createPinia } from 'pinia'
 import { setupLayouts } from 'virtual:generated-layouts'
-import { ViteSSG } from 'vite-ssg'
+import { createApp } from 'vue'
+import { createI18n } from 'vue-i18n'
+import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from 'vue-router/auto-routes'
 import App from './App.vue'
 
@@ -12,17 +16,38 @@ import 'uno.css'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 
-// https://github.com/antfu/vite-ssg
-export const createApp = ViteSSG(
-  App,
-  {
-    routes: setupLayouts(routes),
-    base: import.meta.env.BASE_URL,
-  },
-  (ctx) => {
-    // install all modules under `modules/`
-    Object.values(import.meta.glob<{ install: UserModule }>('./modules/*.ts', { eager: true }))
-      .forEach(i => i.install?.(ctx))
-    // ctx.app.use(Previewer)
-  },
-)
+const app = createApp(App)
+
+// Setup router
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: setupLayouts(routes),
+})
+
+// Setup head management
+const head = createHead()
+
+// Setup pinia
+const pinia = createPinia()
+
+// Setup i18n
+const i18n = createI18n({
+  legacy: false,
+  locale: 'en',
+  messages,
+})
+
+app.use(router)
+app.use(head)
+app.use(pinia)
+app.use(i18n)
+
+// Install nprogress
+router.beforeEach(() => {
+  NProgress.start()
+})
+router.afterEach(() => {
+  NProgress.done()
+})
+
+app.mount('#app')

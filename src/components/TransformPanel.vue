@@ -282,7 +282,7 @@ onUnmounted(() => {
           @change="handleFileUpload"
         >
         <input
-          ref="folderInputRef" type="file" class="hidden" webkitdirectory multiple
+          ref="folderInputRef" type="file" class="hidden" multiple webkitdirectory
           @change="handleFolderUpload"
         >
 
