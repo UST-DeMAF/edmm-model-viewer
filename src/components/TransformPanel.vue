@@ -9,7 +9,7 @@ import {
   handleSingleFileTransformation,
   moveToTADMS,
   startTransformationProcess,
-} from '~/services/transformationService'
+} from '~/services/transformation-service'
 
 const emit = defineEmits<{
   (e: 'transformationComplete', payload: { id: string, name: string }): void

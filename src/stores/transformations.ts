@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import {
   existsTADM,
   generateSessionId,
-} from '~/services/transformationService'
+} from '~/services/transformation-service'
 
 export interface Transformation {
   id: string

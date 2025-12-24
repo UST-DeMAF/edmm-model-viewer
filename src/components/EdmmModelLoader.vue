@@ -3,7 +3,7 @@ import type { EdmmDeploymentModel } from '~/lib/io'
 import { AlertCircle, FileText, Loader2, Upload } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 import { parseAndValidateEdmm } from '~/lib/io'
-import { fetchTADM } from '~/services/transformationService'
+import { fetchTADM } from '~/services/transformation-service'
 
 const props = defineProps<{
   /** Optional: Load model from backend by transformation process ID */
