@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getBezierPath, EdgeLabelRenderer, BaseEdge } from '@vue-flow/core'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@vue-flow/core'
 import { computed } from 'vue'
 import { RelationType } from '~/lib/graph-layout'
 import EdmmMarker from './EdmmMarker.vue'
@@ -53,7 +53,8 @@ const relationTypeColors: Record<RelationType, string> = {
 
 // Edge color based on relation type and state
 const edgeColor = computed(() => {
-  if (props.data?.dimmed) return 'var(--muted-foreground)'
+  if (props.data?.dimmed)
+    return 'var(--muted-foreground)'
   if (props.data?.relationType) {
     return relationTypeColors[props.data.relationType]
   }
@@ -85,16 +86,16 @@ const labelClasses = computed(() => ({
 <template>
   <!-- Custom marker for this edge -->
   <EdmmMarker :id="markerId" :color="edgeColor" />
-  
+
   <!-- Base edge -->
-  <BaseEdge 
-    :id="id" 
-    :path="path.edgePath" 
+  <BaseEdge
+    :id="id"
+    :path="path.edgePath"
     :marker-end="`url(#${markerId})`"
     :style="edgeStyle"
     :class="edgeClasses"
   />
-  
+
   <!-- Animated flow overlay for highlighted edges -->
   <path
     v-if="data?.highlighted"
@@ -102,9 +103,9 @@ const labelClasses = computed(() => ({
     class="edmm-edge__flow"
     fill="none"
   />
-  
+
   <EdgeLabelRenderer v-if="data?.label">
-    <div 
+    <div
       :class="labelClasses"
       :style="{
         position: 'absolute',
@@ -153,7 +154,7 @@ const labelClasses = computed(() => ({
   stroke: rgba(255, 255, 255, 0.6);
   stroke-width: 2;
   stroke-dasharray: 6 12;
-  animation: edge-flow .5s linear infinite;
+  animation: edge-flow 0.5s linear infinite;
   pointer-events: none;
 }
 

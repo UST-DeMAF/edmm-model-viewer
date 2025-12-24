@@ -1,5 +1,5 @@
 @import './markdown.css';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -132,4 +132,3 @@ html.dark {
 .vue-flow__edge-interaction {
   pointer-events: none !important;
 }
-

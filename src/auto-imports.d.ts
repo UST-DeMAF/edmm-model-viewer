@@ -278,6 +278,7 @@ declare global {
   const useToNumber: typeof import('@vueuse/core')['useToNumber']
   const useToString: typeof import('@vueuse/core')['useToString']
   const useToggle: typeof import('@vueuse/core')['useToggle']
+  const useTransformationStore: typeof import('./stores/transformations')['useTransformationStore']
   const useTransition: typeof import('@vueuse/core')['useTransition']
   const useUrlSearchParams: typeof import('@vueuse/core')['useUrlSearchParams']
   const useUserMedia: typeof import('@vueuse/core')['useUserMedia']
@@ -322,6 +323,9 @@ declare global {
   // @ts-ignore
   export type { NodeInfoPanelState } from './stores/node-info-panel'
   import('./stores/node-info-panel')
+  // @ts-ignore
+  export type { Transformation } from './stores/transformations'
+  import('./stores/transformations')
 }
 
 // for vue template auto import
@@ -598,6 +602,7 @@ declare module 'vue' {
     readonly useToNumber: UnwrapRef<typeof import('@vueuse/core')['useToNumber']>
     readonly useToString: UnwrapRef<typeof import('@vueuse/core')['useToString']>
     readonly useToggle: UnwrapRef<typeof import('@vueuse/core')['useToggle']>
+    readonly useTransformationStore: UnwrapRef<typeof import('./stores/transformations')['useTransformationStore']>
     readonly useTransition: UnwrapRef<typeof import('@vueuse/core')['useTransition']>
     readonly useUrlSearchParams: UnwrapRef<typeof import('@vueuse/core')['useUrlSearchParams']>
     readonly useUserMedia: UnwrapRef<typeof import('@vueuse/core')['useUserMedia']>

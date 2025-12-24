@@ -9,8 +9,8 @@ import '@unocss/reset/tailwind.css'
 import './styles/main.css'
 import 'uno.css'
 
-import '@vue-flow/core/dist/style.css';
-import '@vue-flow/core/dist/theme-default.css';
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
 
 // https://github.com/antfu/vite-ssg
 export const createApp = ViteSSG(

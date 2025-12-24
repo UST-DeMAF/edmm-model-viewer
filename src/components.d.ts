@@ -15,6 +15,7 @@ declare module 'vue' {
     Collapsible: typeof import('./components/ui/collapsible/Collapsible.vue')['default']
     CollapsibleContent: typeof import('./components/ui/collapsible/CollapsibleContent.vue')['default']
     CollapsibleTrigger: typeof import('./components/ui/collapsible/CollapsibleTrigger.vue')['default']
+    copy: typeof import('./components/EdmmModelLoader copy.vue')['default']
     DropdownMenu: typeof import('./components/ui/dropdown-menu/DropdownMenu.vue')['default']
     DropdownMenuCheckboxItem: typeof import('./components/ui/dropdown-menu/DropdownMenuCheckboxItem.vue')['default']
     DropdownMenuContent: typeof import('./components/ui/dropdown-menu/DropdownMenuContent.vue')['default']
@@ -62,5 +63,6 @@ declare module 'vue' {
     TooltipContent: typeof import('./components/ui/tooltip/TooltipContent.vue')['default']
     TooltipProvider: typeof import('./components/ui/tooltip/TooltipProvider.vue')['default']
     TooltipTrigger: typeof import('./components/ui/tooltip/TooltipTrigger.vue')['default']
+    TransformPanel: typeof import('./components/TransformPanel.vue')['default']
   }
 }

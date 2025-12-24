@@ -2,7 +2,6 @@
 import { storeToRefs } from 'pinia'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
 import { Button } from './ui/button'
-import { ButtonGroup } from './ui/button-group'
 import { Input } from './ui/input'
 import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger } from './ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
@@ -115,7 +114,7 @@ function toggleLayoutDirection() {
     </Select>
     <div class="flex items-center relative">
       <i
-        class="i-lucide-search top-1/2 -translate-y-1/2 text-muted-foreground size-4 pointer-events-none left-2.5 absolute"
+        class="top-1/2 i-lucide-search -translate-y-1/2 text-muted-foreground size-4 pointer-events-none left-2.5 absolute"
       />
       <Input v-model="searchQuery" placeholder="Search nodes..." class="pl-8 h-8 w-48" />
     </div>

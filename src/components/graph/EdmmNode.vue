@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { Handle, Position } from '@vue-flow/core'
+import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { isDark } from '~/composables/dark'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
-import { storeToRefs } from 'pinia'
-
-const store = useGraphSettingsStore()
-const { layoutDirection } = storeToRefs(store)
 
 const props = defineProps<{
   id: string
@@ -21,13 +18,15 @@ const props = defineProps<{
     searchQuery?: string
   }
 }>()
+const store = useGraphSettingsStore()
+const { layoutDirection } = storeToRefs(store)
 
 // Handle positions based on layout direction
-const targetPosition = computed(() => 
-  layoutDirection.value === 'vertical' ? Position.Top : Position.Left
+const targetPosition = computed(() =>
+  layoutDirection.value === 'vertical' ? Position.Top : Position.Left,
 )
-const sourcePosition = computed(() => 
-  layoutDirection.value === 'vertical' ? Position.Bottom : Position.Right
+const sourcePosition = computed(() =>
+  layoutDirection.value === 'vertical' ? Position.Bottom : Position.Right,
 )
 
 // Add 'dark' class when user is in light mode for better contrast
@@ -54,18 +53,20 @@ const nodeStyle = computed(() => {
 const highlightedLabel = computed(() => {
   const label = props.data.label
   const query = props.data.searchQuery?.trim().toLowerCase()
-  
-  if (!query) return label
-  
+
+  if (!query)
+    return label
+
   const lowerLabel = label.toLowerCase()
   const index = lowerLabel.indexOf(query)
-  
-  if (index === -1) return label
-  
+
+  if (index === -1)
+    return label
+
   const before = label.slice(0, index)
   const match = label.slice(index, index + query.length)
   const after = label.slice(index + query.length)
-  
+
   return `${before}<mark class="edmm-node__highlight">${match}</mark>${after}`
 })
 </script>
@@ -76,20 +77,20 @@ const highlightedLabel = computed(() => {
     <div v-if="data.isGroupNode" class="edmm-node__group-header" v-html="highlightedLabel" />
     <!-- For regular nodes, show label centered -->
     <div v-else class="edmm-node__label" v-html="highlightedLabel" />
-    
+
     <!-- Handles for edges -->
-    <Handle 
+    <Handle
       v-if="!data.isGroupNode"
-      id="target" 
-      type="target" 
-      :position="targetPosition" 
+      id="target"
+      type="target"
+      :position="targetPosition"
       class="edmm-node__handle"
     />
-    <Handle 
+    <Handle
       v-if="!data.isGroupNode"
-      id="source" 
-      type="source" 
-      :position="sourcePosition" 
+      id="source"
+      type="source"
+      :position="sourcePosition"
       class="edmm-node__handle"
     />
   </div>
@@ -102,7 +103,7 @@ const highlightedLabel = computed(() => {
   border-radius: 12px;
   padding: 12px 16px;
   min-width: 160px;
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(0, 0, 0, 0.05);
   transition: all 0.1s ease-out;
@@ -138,8 +139,13 @@ const highlightedLabel = computed(() => {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .edmm-node--dimmed {

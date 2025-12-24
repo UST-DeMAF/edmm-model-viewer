@@ -18,12 +18,12 @@ interface HighlightResult {
  */
 function buildDependencyGraph(
   model: EdmmDeploymentModel,
-  visibleRelations: RelationType[]
+  visibleRelations: RelationType[],
 ): {
-  dependencies: Map<string, Set<string>>
-  dependents: Map<string, Set<string>>
-  edgeMap: Map<string, { source: string, target: string, id: string }>
-} {
+    dependencies: Map<string, Set<string>>
+    dependents: Map<string, Set<string>>
+    edgeMap: Map<string, { source: string, target: string, id: string }>
+  } {
   const dependencies = new Map<string, Set<string>>()
   const dependents = new Map<string, Set<string>>()
   const edgeMap = new Map<string, { source: string, target: string, id: string }>()

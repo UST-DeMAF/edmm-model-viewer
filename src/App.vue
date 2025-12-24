@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TooltipProvider from './components/ui/tooltip/TooltipProvider.vue';
+import TooltipProvider from './components/ui/tooltip/TooltipProvider.vue'
 
 // https://github.com/vueuse/head
 // you can use this to manipulate the document head in any components,
