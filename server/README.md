@@ -1,4 +1,4 @@
-# EDMM Model Viewer Server
+# DeMAF Web UI Server
 
 Express backend for file uploads and TADM management.
 

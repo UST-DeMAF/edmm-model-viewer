@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Node } from '@vue-flow/core'
 import type { ComponentAssignment } from '~/lib/io'
-import { BoxIcon, ChevronsUpDown, CogIcon, FileIcon, GitBranchIcon, HashIcon, InfoIcon, TagIcon, XIcon } from 'lucide-vue-next'
+import { BoxIcon, ChevronDown, ChevronUp, CogIcon, FileIcon, GitBranchIcon, HashIcon, InfoIcon, TagIcon, XIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useNodeInfoPanelStore } from '~/stores/node-info-panel'
@@ -117,40 +117,41 @@ const metadataArray = computed(() => {
   <Transition name="slide">
     <aside
       v-if="node && component"
-      class="border border-border rounded-lg bg-card flex flex-col h-[calc(100%-1rem)] w-[380px] shadow-lg right-2 top-2 absolute z-10 overflow-hidden"
+      class="border border-border rounded-lg bg-sidebar flex flex-col h-[calc(100%-2rem)] w-[380px] right-[1rem] top-[1rem] absolute z-10 overflow-hidden"
     >
       <!-- Header -->
-      <header class="px-4 pb-3 pt-4 border-b border-border bg-primary flex items-center justify-between">
+      <header class="text-accent-foreground px-4 pb-3 pt-4 border-b border-border bg-foreground/5 flex items-center justify-between">
         <div class="flex gap-3 items-center">
-          <div class="text-primary rounded-md bg-primary-foreground flex size-5 items-center justify-center">
+          <div class="rounded-md flex size-5 items-center justify-center">
             <BoxIcon class="size-5" />
           </div>
           <div class="flex flex-col">
-            <h2 class="text-base text-primary-foreground font-semibold leading-tight m-0">
+            <h2 class="text-base font-semibold leading-tight m-0">
               {{ node.id }}
             </h2>
-            <span class="text-xs text-primary-foreground/80 font-mono">{{ component.type }}</span>
+            <span class="text-xs font-mono">{{ component.type }}</span>
           </div>
         </div>
-        <Button variant="ghost" size="icon" class="opacity-80 text-primary-foreground! hover:opacity-100 hover:bg-white/10!" @click="emit('close')">
+        <Button variant="ghost" size="icon" class="opacity-80 hover:opacity-100 hover:bg-white/10!" @click="emit('close')">
           <XIcon class="size-4" />
         </Button>
       </header>
 
       <!-- Content -->
-      <div class="p-4 flex flex-1 flex-col gap-3 overflow-y-auto">
+      <div class="p-2 flex flex-1 flex-col gap-2 overflow-y-auto">
         <!-- Description -->
-        <Collapsible v-if="component.description" v-model:open="descriptionOpen" class="flex flex-col gap-2">
+        <Collapsible v-if="component.description" v-model:open="descriptionOpen" class="flex flex-col gap-1">
           <CollapsibleTrigger as-child>
-            <div class="flex cursor-ns-resize items-center justify-between">
+            <Button variant="ghost" class="flex h-9 items-center justify-between ps-2!">
               <div class="flex gap-2 items-center">
                 <InfoIcon class="text-muted-foreground size-4" />
                 <h3 class="text-xs text-foreground font-semibold tracking-wide m-0 uppercase">
                   Description
                 </h3>
               </div>
-              <ChevronsUpDown class="text-muted-foreground size-3" />
-            </div>
+              <ChevronUp v-if="descriptionOpen" class="text-muted-foreground size-3" />
+              <ChevronDown v-else class="text-muted-foreground size-3" />
+            </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <p class="text-sm text-muted-foreground leading-relaxed m-0">
@@ -160,26 +161,27 @@ const metadataArray = computed(() => {
         </Collapsible>
 
         <!-- Type Hierarchy -->
-        <Collapsible v-if="typeHierarchy.length > 1" v-model:open="typeHierarchyOpen" class="flex flex-col gap-2">
+        <Collapsible v-if="typeHierarchy.length > 1" v-model:open="typeHierarchyOpen" class="flex flex-col gap-1">
           <CollapsibleTrigger as-child>
-            <div class="flex cursor-ns-resize items-center justify-between">
+            <Button variant="ghost" class="flex h-9 items-center justify-between ps-2!">
               <div class="flex gap-2 items-center">
                 <GitBranchIcon class="text-muted-foreground size-4" />
                 <h3 class="text-xs text-foreground font-semibold tracking-wide m-0 uppercase">
                   Type Hierarchy
                 </h3>
               </div>
-              <ChevronsUpDown class="text-muted-foreground size-3" />
-            </div>
+              <ChevronUp v-if="typeHierarchyOpen" class="text-muted-foreground size-3" />
+              <ChevronDown v-else class="text-muted-foreground size-3" />
+            </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div class="flex flex-col gap-1">
+            <div class="px-2.5 flex flex-col gap-1">
               <div v-for="(typeName, index) in typeHierarchy" :key="typeName" class="flex h-6 items-stretch">
                 <div :style="`width: ${index * 10}px`" class="h-full relative overflow-hidden">
                   <div class="border border-foreground rounded-md h-full w-[10px] right-0 absolute -translate-x-[50%] -translate-y-[50%]" />
                 </div>
                 <span
-                  class="text-xs text-muted-foreground font-mono px-2 py-1 rounded bg-muted" :class="[
+                  class="text-xs text-foreground font-mono px-2 py-1 rounded bg-muted" :class="[
                     index !== typeHierarchy.length - 1 || 'font-semibold',
                   ]"
                 >{{ typeName }}</span>
@@ -189,20 +191,21 @@ const metadataArray = computed(() => {
         </Collapsible>
 
         <!-- Metadata -->
-        <Collapsible v-if="metadataArray.length > 0" v-model:open="metadataOpen" class="flex flex-col gap-2">
+        <Collapsible v-if="metadataArray.length > 0" v-model:open="metadataOpen" class="flex flex-col gap-1">
           <CollapsibleTrigger as-child>
-            <div class="flex cursor-ns-resize items-center justify-between">
+            <Button variant="ghost" class="flex h-9 items-center justify-between ps-2!">
               <div class="flex gap-2 items-center">
                 <TagIcon class="text-muted-foreground size-4" />
                 <h3 class="text-xs text-foreground font-semibold tracking-wide m-0 uppercase">
                   Metadata
                 </h3>
-                <span class="text-[0.65rem] text-muted-foreground font-semibold px-1.5 py-0.5 rounded-full bg-muted">{{ metadataArray.length }}</span>
+                <span class="leading-none text-xs text-foreground">({{ metadataArray.length }})</span>
               </div>
-              <ChevronsUpDown class="text-muted-foreground size-3" />
-            </div>
+              <ChevronUp v-if="metadataOpen" class="text-muted-foreground size-3" />
+              <ChevronDown v-else class="text-muted-foreground size-3" />
+            </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent class="flex flex-col gap-1.5">
+          <CollapsibleContent class="flex flex-col gap-1">
             <div v-for="meta in metadataArray" :key="meta.key" class="px-2.5 py-2 rounded-md bg-muted gap-3 grid grid-cols-[minmax(120px,auto)_1fr] overflow-hidden">
               <span class="text-xs text-muted-foreground font-medium break-words">{{ meta.key }}</span>
               <span class="text-xs text-foreground font-mono break-all">{{ meta.value }}</span>
@@ -211,24 +214,25 @@ const metadataArray = computed(() => {
         </Collapsible>
 
         <!-- Properties -->
-        <Collapsible v-if="propertiesArray.length > 0" v-model:open="propertiesOpen" class="flex flex-col gap-2">
+        <Collapsible v-if="propertiesArray.length > 0" v-model:open="propertiesOpen" class="flex flex-col gap-1">
           <CollapsibleTrigger as-child>
-            <div class="flex cursor-ns-resize items-center justify-between">
+            <Button variant="ghost" class="flex h-9 items-center justify-between ps-2!">
               <div class="flex gap-2 items-center">
                 <HashIcon class="text-muted-foreground size-4" />
                 <h3 class="text-xs text-foreground font-semibold tracking-wide m-0 uppercase">
                   Properties
                 </h3>
-                <span class="text-[0.65rem] text-muted-foreground font-semibold px-1.5 py-0.5 rounded-full bg-muted">{{ propertiesArray.length }}</span>
+                <span class="leading-none text-xs text-foreground">({{ propertiesArray.length }})</span>
               </div>
-              <ChevronsUpDown class="text-muted-foreground size-3" />
-            </div>
+              <ChevronUp v-if="propertiesOpen" class="text-muted-foreground size-3" />
+              <ChevronDown v-else class="text-muted-foreground size-3" />
+            </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent class="flex flex-col gap-1.5">
+          <CollapsibleContent class="flex flex-col gap-1">
             <div
               v-for="prop in propertiesArray"
               :key="prop.key"
-              class="px-2.5 py-2 rounded-md bg-muted flex flex-col overflow-hidden"
+              class="px-2.5 py-2 rounded-md bg-foreground/3 flex flex-col overflow-hidden"
             >
               <Tooltip :delay-duration="1000">
                 <TooltipTrigger as-child>
@@ -259,20 +263,21 @@ const metadataArray = computed(() => {
         </Collapsible>
 
         <!-- Operations -->
-        <Collapsible v-if="operationsArray.length > 0" v-model:open="operationsOpen" class="flex flex-col gap-2">
+        <Collapsible v-if="operationsArray.length > 0" v-model:open="operationsOpen" class="flex flex-col gap-1">
           <CollapsibleTrigger as-child>
-            <div class="flex cursor-ns-resize items-center justify-between">
+            <Button variant="ghost" class="flex h-9 items-center justify-between ps-2!">
               <div class="flex gap-2 items-center">
                 <CogIcon class="text-muted-foreground size-4" />
                 <h3 class="text-xs text-foreground font-semibold tracking-wide m-0 uppercase">
                   Operations
                 </h3>
-                <span class="text-[0.65rem] text-muted-foreground font-semibold px-1.5 py-0.5 rounded-full bg-muted">{{ operationsArray.length }}</span>
+                <span class="leading-none text-xs text-foreground">({{ operationsArray.length }})</span>
               </div>
-              <ChevronsUpDown class="text-muted-foreground size-3" />
-            </div>
+              <ChevronUp v-if="operationsOpen" class="text-muted-foreground size-3" />
+              <ChevronDown v-else class="text-muted-foreground size-3" />
+            </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent class="flex flex-col gap-1.5">
+          <CollapsibleContent class="flex flex-col gap-1">
             <details v-for="op in operationsArray" :key="op.name" class="rounded-md bg-muted overflow-hidden">
               <summary class="text-sm text-foreground font-medium px-3 py-2 cursor-pointer select-none transition-colors hover:bg-accent">
                 {{ op.name }}
@@ -303,18 +308,19 @@ const metadataArray = computed(() => {
         <!-- Artifacts -->
         <Collapsible v-if="artifactsArray.length > 0" v-model:open="artifactsOpen" class="flex flex-col gap-2">
           <CollapsibleTrigger as-child>
-            <div class="flex cursor-ns-resize items-center justify-between">
+            <Button variant="ghost" class="flex h-9 items-center justify-between ps-2!">
               <div class="flex gap-2 items-center">
                 <FileIcon class="text-muted-foreground size-4" />
                 <h3 class="text-xs text-foreground font-semibold tracking-wide m-0 uppercase">
                   Artifacts
                 </h3>
-                <span class="text-[0.65rem] text-muted-foreground font-semibold px-1.5 py-0.5 rounded-full bg-muted">{{ artifactsArray.length }}</span>
+                <span class="leading-none text-xs text-foreground">({{ artifactsArray.length }})</span>
               </div>
-              <ChevronsUpDown class="text-muted-foreground size-3" />
-            </div>
+              <ChevronUp v-if="artifactsOpen" class="text-muted-foreground size-3" />
+              <ChevronDown v-else class="text-muted-foreground size-3" />
+            </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent class="flex flex-col gap-1.5">
+          <CollapsibleContent class="flex flex-col gap-1">
             <div v-for="(artifact, idx) in artifactsArray" :key="idx" class="px-2.5 py-2 rounded-md bg-muted flex gap-2.5 items-start">
               <span class="text-[0.65rem] text-white font-semibold tracking-tight px-2 py-1 rounded bg-chart-2 shrink-0 uppercase">{{ artifact.type }}</span>
               <div class="flex flex-col gap-0.5 min-w-0">

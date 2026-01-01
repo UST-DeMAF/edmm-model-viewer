@@ -16,7 +16,7 @@ interface HighlightResult {
  * - dependencies: nodeId -> Set of nodeIds that this node depends on (targets of outgoing edges)
  * - dependents: nodeId -> Set of nodeIds that depend on this node (sources of incoming edges)
  */
-function buildDependencyGraph(
+export function buildDependencyGraph(
   model: EdmmDeploymentModel,
   visibleRelations: RelationType[],
 ): {
@@ -64,51 +64,53 @@ function buildDependencyGraph(
 }
 
 /**
- * Get all transitive dependencies of a node (nodes it depends on, recursively)
+ * Compute the total number of transitive dependents (all successors) for each node.
+ * A dependent is a node that depends on this node (directly or indirectly).
+ * This is useful for scaling nodes by their "importance" in the dependency graph.
  */
-function getAllDependencies(
-  nodeId: string,
-  dependencies: Map<string, Set<string>>,
-  visited = new Set<string>(),
-): Set<string> {
-  const result = new Set<string>()
-  const directDeps = dependencies.get(nodeId) || new Set()
+export function computeDependentCounts(
+  model: EdmmDeploymentModel,
+  visibleRelations: RelationType[],
+): Map<string, number> {
+  const { dependents } = buildDependencyGraph(model, visibleRelations)
+  const counts = new Map<string, number>()
+  const cache = new Map<string, Set<string>>()
 
-  directDeps.forEach((depId) => {
-    if (!visited.has(depId)) {
-      visited.add(depId)
-      result.add(depId)
-      // Recursively get dependencies
-      const transitiveDeps = getAllDependencies(depId, dependencies, visited)
-      transitiveDeps.forEach(id => result.add(id))
+  // Helper function to get all transitive dependents for a node
+  function getAllDependents(nodeId: string, visited: Set<string> = new Set()): Set<string> {
+    // Check cache first
+    if (cache.has(nodeId)) {
+      return cache.get(nodeId)!
     }
+
+    // Prevent infinite loops in case of cycles
+    if (visited.has(nodeId)) {
+      return new Set()
+    }
+    visited.add(nodeId)
+
+    const allDependents = new Set<string>()
+    const directDependents = dependents.get(nodeId) || new Set()
+
+    // Add direct dependents
+    directDependents.forEach((depId) => {
+      allDependents.add(depId)
+      // Recursively get dependents of dependents
+      const transitiveDeps = getAllDependents(depId, new Set(visited))
+      transitiveDeps.forEach(id => allDependents.add(id))
+    })
+
+    cache.set(nodeId, allDependents)
+    return allDependents
+  }
+
+  // Compute counts for all nodes
+  Object.keys(model.components).forEach((nodeId) => {
+    const allDeps = getAllDependents(nodeId)
+    counts.set(nodeId, allDeps.size)
   })
 
-  return result
-}
-
-/**
- * Get all transitive dependents of a node (nodes that depend on it, recursively)
- */
-function getAllDependents(
-  nodeId: string,
-  dependents: Map<string, Set<string>>,
-  visited = new Set<string>(),
-): Set<string> {
-  const result = new Set<string>()
-  const directDeps = dependents.get(nodeId) || new Set()
-
-  directDeps.forEach((depId) => {
-    if (!visited.has(depId)) {
-      visited.add(depId)
-      result.add(depId)
-      // Recursively get dependents
-      const transitiveDeps = getAllDependents(depId, dependents, visited)
-      transitiveDeps.forEach(id => result.add(id))
-    }
-  })
-
-  return result
+  return counts
 }
 
 /**
@@ -136,24 +138,14 @@ export function computeHighlights(
   let targetNodeIds: Set<string>
 
   switch (interactionMode) {
-    case 'HIGHLIGHT_DIRECT_DEPENDENCIES':
-      // Nodes that the selected node directly depends on
+    case 'HIGHLIGHT_DIRECT_SUCCESSORS':
+      // Nodes that the selected node directly depends on (successors)
       targetNodeIds = dependencies.get(selectedNodeId) || new Set()
       break
 
-    case 'HIGHLIGHT_ALL_DEPENDENCIES':
-      // All nodes in the dependency chain (transitive)
-      targetNodeIds = getAllDependencies(selectedNodeId, dependencies)
-      break
-
-    case 'HIGHLIGHT_DIRECT_DESCENDANTS':
-      // Nodes that directly depend on the selected node
+    case 'HIGHLIGHT_DIRECT_PREDECESSORS':
+      // Nodes that directly depend on the selected node (predecessors)
       targetNodeIds = dependents.get(selectedNodeId) || new Set()
-      break
-
-    case 'HIGHLIGHT_ALL_DESCENDANTS':
-      // All nodes that depend on the selected node (transitive)
-      targetNodeIds = getAllDependents(selectedNodeId, dependents)
       break
 
     case 'HIGHLIGHT_NEIGHBOURS': {
@@ -176,41 +168,17 @@ export function computeHighlights(
   // For ALL modes: edges along the dependency/descendant chain
   edgeMap.forEach((edge, edgeId) => {
     switch (interactionMode) {
-      case 'HIGHLIGHT_DIRECT_DEPENDENCIES':
-        // Only edges FROM the selected node TO its direct dependencies
+      case 'HIGHLIGHT_DIRECT_SUCCESSORS':
+        // Only edges FROM the selected node TO its direct successors
         if (edge.source === selectedNodeId && targetNodeIds.has(edge.target)) {
           highlightedEdgeIds.add(edgeId)
         }
         break
 
-      case 'HIGHLIGHT_DIRECT_DESCENDANTS':
-        // Only edges FROM direct descendants TO the selected node
+      case 'HIGHLIGHT_DIRECT_PREDECESSORS':
+        // Only edges FROM direct predecessors TO the selected node
         if (targetNodeIds.has(edge.source) && edge.target === selectedNodeId) {
           highlightedEdgeIds.add(edgeId)
-        }
-        break
-
-      case 'HIGHLIGHT_ALL_DEPENDENCIES':
-        // Edges along the dependency chain: source depends on target
-        // Include edge if source is highlighted AND target is a dependency of source
-        if (highlightedNodeIds.has(edge.source) && highlightedNodeIds.has(edge.target)) {
-          // Verify this edge is part of the dependency chain from selected node
-          const sourceDeps = dependencies.get(edge.source) || new Set()
-          if (sourceDeps.has(edge.target)) {
-            highlightedEdgeIds.add(edgeId)
-          }
-        }
-        break
-
-      case 'HIGHLIGHT_ALL_DESCENDANTS':
-        // Edges along the descendant chain: source depends on target
-        // Include edge if target is highlighted AND source is a dependent of target
-        if (highlightedNodeIds.has(edge.source) && highlightedNodeIds.has(edge.target)) {
-          // Verify this edge is part of the descendant chain to selected node
-          const targetDependents = dependents.get(edge.target) || new Set()
-          if (targetDependents.has(edge.source)) {
-            highlightedEdgeIds.add(edgeId)
-          }
         }
         break
 

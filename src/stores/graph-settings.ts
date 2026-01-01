@@ -20,23 +20,28 @@ interface GraphSettingsState {
   layoutRelations: RelationType[]
   visibleRelations: RelationType[]
   layoutDirection: LayoutDirection
+  visibleNodeTypes: string[]
+  scaleWithDependencies: boolean
 }
 
 const DEFAULT_STATE: GraphSettingsState = {
   hostedOnRelationDisplay: 'SHOW',
-  interactionMode: 'HIGHLIGHT_DIRECT_DEPENDENCIES',
+  interactionMode: 'NORMAL',
   showEdgeLabels: false,
   layoutRelations: [...ALL_RELATION_TYPES],
   visibleRelations: [...ALL_RELATION_TYPES],
   layoutDirection: 'horizontal',
+  visibleNodeTypes: [], // Empty = show all types
+  scaleWithDependencies: false,
 }
 
 export const useGraphSettingsStore = defineStore('graph-settings', () => {
   // Persisted state using localStorage
   const state = useLocalStorage<GraphSettingsState>('graph-settings-state', { ...DEFAULT_STATE })
 
-  // Search query is not persisted (should reset on page load)
+  // Search state is not persisted (should reset on page load)
   const searchQuery = ref('')
+  const isSearchOpen = ref(false)
 
   // Computed getters/setters for individual state properties
   const hostedOnRelationDisplay = computed({
@@ -69,6 +74,16 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     set: val => state.value.layoutDirection = val,
   })
 
+  const visibleNodeTypes = computed({
+    get: () => state.value.visibleNodeTypes,
+    set: val => state.value.visibleNodeTypes = val,
+  })
+
+  const scaleWithDependencies = computed({
+    get: () => state.value.scaleWithDependencies,
+    set: val => state.value.scaleWithDependencies = val,
+  })
+
   // Computed config for use in graph layout
   const config = computed<LayoutConfig>(() => ({
     hostedOnRelationDisplay: hostedOnRelationDisplay.value,
@@ -77,6 +92,7 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     layoutRelations: layoutRelations.value,
     visibleRelations: visibleRelations.value,
     layoutDirection: layoutDirection.value,
+    scaleWithDependencies: scaleWithDependencies.value,
   }))
 
   // Helper to check/toggle layout relation types
@@ -123,7 +139,10 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     layoutRelations,
     visibleRelations,
     layoutDirection,
+    visibleNodeTypes,
+    scaleWithDependencies,
     searchQuery,
+    isSearchOpen,
     // Computed
     config,
     // Actions

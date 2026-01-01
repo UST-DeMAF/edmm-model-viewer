@@ -188,6 +188,7 @@ declare global {
   const useGraphSettingsStore: typeof import('./stores/graph-settings')['useGraphSettingsStore']
   const useHead: typeof import('@unhead/vue')['useHead']
   const useHeadSafe: typeof import('@unhead/vue')['useHeadSafe']
+  const useHoveredNode: typeof import('./composables/useHoveredNode')['useHoveredNode']
   const useI18n: typeof import('vue-i18n')['useI18n']
   const useId: typeof import('vue')['useId']
   const useIdle: typeof import('@vueuse/core')['useIdle']
@@ -512,6 +513,7 @@ declare module 'vue' {
     readonly useGraphSettingsStore: UnwrapRef<typeof import('./stores/graph-settings')['useGraphSettingsStore']>
     readonly useHead: UnwrapRef<typeof import('@unhead/vue')['useHead']>
     readonly useHeadSafe: UnwrapRef<typeof import('@unhead/vue')['useHeadSafe']>
+    readonly useHoveredNode: UnwrapRef<typeof import('./composables/useHoveredNode')['useHoveredNode']>
     readonly useI18n: UnwrapRef<typeof import('vue-i18n')['useI18n']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useIdle: UnwrapRef<typeof import('@vueuse/core')['useIdle']>

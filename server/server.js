@@ -239,7 +239,7 @@ app.use((err, req, res, _next) => {
 })
 
 app.listen(port, () => {
-  console.log(`🚀 EDMM Model Viewer Server is running on port ${port}`)
+  console.log(`🚀 DeMAF Web UI Server is running on port ${port}`)
   console.log(`   Uploads directory: ${UPLOADS_DIR}`)
   console.log(`   TADMs directory: ${TADMS_DIR}`)
 })

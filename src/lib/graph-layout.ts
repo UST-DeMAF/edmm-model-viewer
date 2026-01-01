@@ -1,6 +1,7 @@
 import type { Node } from '@vue-flow/core'
 import type { EdmmDeploymentModel } from './io'
 import dagre from '@dagrejs/dagre'
+import { computeDependentCounts } from './graph-highlighting'
 
 // Node dimensions
 export const NODE_WIDTH = 180
@@ -39,7 +40,7 @@ export type LayoutDirection = 'vertical' | 'horizontal'
 
 export interface LayoutConfig {
   hostedOnRelationDisplay: HostedOnRelationDisplay
-  interactionMode: 'HIGHLIGHT_DIRECT_DEPENDENCIES' | 'HIGHLIGHT_ALL_DEPENDENCIES' | 'HIGHLIGHT_DIRECT_DESCENDANTS' | 'HIGHLIGHT_ALL_DESCENDANTS' | 'HIGHLIGHT_NEIGHBOURS'
+  interactionMode: 'NORMAL' | 'HIGHLIGHT_DIRECT_SUCCESSORS' | 'HIGHLIGHT_DIRECT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS'
   showEdgeLabels: boolean
   /** Which relation types to use for calculating node positions (affects layout) */
   layoutRelations: RelationType[]
@@ -47,6 +48,8 @@ export interface LayoutConfig {
   visibleRelations: RelationType[]
   /** Direction of the graph layout */
   layoutDirection: LayoutDirection
+  /** Whether to scale nodes based on their dependency count */
+  scaleWithDependencies: boolean
 }
 
 export interface LayoutResult {
@@ -122,6 +125,7 @@ function runFlatDagreLayout(
   model: EdmmDeploymentModel,
   componentIds: string[],
   config: LayoutConfig,
+  nodeScales: Map<string, number>,
 ): Node[] {
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -143,9 +147,12 @@ function runFlatDagreLayout(
     marginy: 20,
   })
 
-  // Add nodes
+  // Add nodes (with scaled dimensions if enabled)
   componentIds.forEach((id) => {
-    dagreGraph.setNode(id, { width: NODE_WIDTH, height: NODE_HEIGHT })
+    const scale = nodeScales.get(id) ?? 1
+    const width = Math.round(NODE_WIDTH * scale)
+    const height = Math.round(NODE_HEIGHT * scale)
+    dagreGraph.setNode(id, { width, height })
   })
 
   // Add edges (only enabled relation types)
@@ -174,20 +181,35 @@ function runFlatDagreLayout(
   return componentIds.map((id) => {
     const nodeWithPosition = dagreGraph.node(id)
     const component = model.components[id]
+    const scale = nodeScales.get(id) ?? 1
+    const width = Math.round(NODE_WIDTH * scale)
+    const height = Math.round(NODE_HEIGHT * scale)
+
+    // Base styling values
+    const baseFontSize = 14
+    const baseBorderRadius = 12
+    const basePaddingV = 12
+    const basePaddingH = 16
 
     return {
       id,
       position: {
-        x: nodeWithPosition.x - NODE_WIDTH / 2,
-        y: nodeWithPosition.y - NODE_HEIGHT / 2,
+        x: nodeWithPosition.x - width / 2,
+        y: nodeWithPosition.y - height / 2,
       },
       data: {
         label: id,
         type: component?.type ?? 'unknown',
+        scale: scale !== 1 ? scale : undefined,
+        dependentCount: nodeScales.has(id) && scale > 1 ? Math.round((scale - 1) * 2 * nodeScales.size) : undefined,
       },
+      class: 'edmm-node',
       style: {
-        width: `${NODE_WIDTH}px`,
-        height: `${NODE_HEIGHT}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+        fontSize: `${Math.round(baseFontSize * scale)}px`,
+        borderRadius: `${Math.round(baseBorderRadius * scale)}px`,
+        padding: `${Math.round(basePaddingV * scale)}px ${Math.round(basePaddingH * scale)}px`,
       },
     }
   })
@@ -334,6 +356,31 @@ function runHierarchicalDagreLayout(
 }
 
 /**
+ * Compute scale factors for nodes based on their dependent counts
+ */
+function computeNodeScales(
+  model: EdmmDeploymentModel,
+  config: LayoutConfig,
+): Map<string, number> {
+  if (!config.scaleWithDependencies) {
+    return new Map()
+  }
+
+  const counts = computeDependentCounts(model, config.visibleRelations)
+  const maxCount = Math.max(...counts.values(), 1)
+
+  const scaleFactors = new Map<string, number>()
+  counts.forEach((count, nodeId) => {
+    // Scale from 1.0 (no dependents) to 1.5 (max dependents)
+    const normalized = maxCount > 0 ? count / maxCount : 0
+    const scale = 1 + (normalized * 0.5)
+    scaleFactors.set(nodeId, scale)
+  })
+
+  return scaleFactors
+}
+
+/**
  * Run dagre layout and return positioned nodes
  */
 export function runDagreLayout(
@@ -344,12 +391,13 @@ export function runDagreLayout(
   const hostedOnMap = buildHostedOnMap(model)
   const hostedComponents = new Set(Object.keys(hostedOnMap))
   const hostChildrenMap = buildHostChildrenMap(hostedOnMap)
+  const nodeScales = computeNodeScales(model, config)
 
   if (config.hostedOnRelationDisplay === 'GROUP') {
     return runHierarchicalDagreLayout(model, componentIds, hostedComponents, hostChildrenMap, config)
   }
   else {
-    return runFlatDagreLayout(model, componentIds, config)
+    return runFlatDagreLayout(model, componentIds, config, nodeScales)
   }
 }
 
