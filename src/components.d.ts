@@ -45,6 +45,7 @@ declare module 'vue' {
     EdmmMarker: typeof import('./components/graph/EdmmMarker.vue')['default']
     EdmmModelLoader: typeof import('./components/EdmmModelLoader.vue')['default']
     EdmmNode: typeof import('./components/graph/EdmmNode.vue')['default']
+    ElementInfoPanel: typeof import('./components/ElementInfoPanel.vue')['default']
     GraphSearch: typeof import('./components/GraphSearch.vue')['default']
     GraphSettings: typeof import('./components/GraphSettings.vue')['default']
     Input: typeof import('./components/ui/input/Input.vue')['default']
