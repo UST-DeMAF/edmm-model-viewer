@@ -232,3 +232,90 @@ export function applyEdgeHighlights(
     },
   }))
 }
+
+/**
+ * Compute shortest paths from an anchor node to all other nodes using BFS.
+ * The graph is treated as undirected for path finding purposes.
+ * Returns a map of targetNodeId -> { path: nodeIds[], edges: edgeIds[] }
+ */
+export function computeShortestPaths(
+  model: EdmmDeploymentModel,
+  anchorNodeId: string,
+  visibleRelations: RelationType[],
+): Map<string, { path: string[], edges: string[] }> {
+  const result = new Map<string, { path: string[], edges: string[] }>()
+
+  // Build adjacency list (directed graph: source -> target)
+  const adjacency = new Map<string, Array<{ neighbor: string, edgeId: string }>>()
+
+  // Initialize all components
+  Object.keys(model.components).forEach((id) => {
+    adjacency.set(id, [])
+  })
+
+  if (model.relations) {
+    Object.entries(model.relations).forEach(([relationId, relation]) => {
+      // Only consider visible relation types
+      const relationType = getRelationType(relation.type)
+      if (relationType && !visibleRelations.includes(relationType)) {
+        return
+      }
+
+      // Add directed edge: source -> target (following relation direction)
+      adjacency.get(relation.source)?.push({ neighbor: relation.target, edgeId: relationId })
+    })
+  }
+
+  // BFS to find shortest paths
+  const visited = new Set<string>([anchorNodeId])
+  const queue: Array<{ nodeId: string, path: string[], edges: string[] }> = [
+    { nodeId: anchorNodeId, path: [anchorNodeId], edges: [] },
+  ]
+
+  // Anchor node has empty path to itself
+  result.set(anchorNodeId, { path: [anchorNodeId], edges: [] })
+
+  while (queue.length > 0) {
+    const { nodeId, path, edges } = queue.shift()!
+
+    const neighbors = adjacency.get(nodeId) || []
+    for (const { neighbor, edgeId } of neighbors) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor)
+        const newPath = [...path, neighbor]
+        const newEdges = [...edges, edgeId]
+        result.set(neighbor, { path: newPath, edges: newEdges })
+        queue.push({ nodeId: neighbor, path: newPath, edges: newEdges })
+      }
+    }
+  }
+
+  return result
+}
+
+/**
+ * Compute highlights for the shortest path from anchor to hovered node
+ */
+export function computeShortestPathHighlights(
+  shortestPaths: Map<string, { path: string[], edges: string[] }>,
+  hoveredNodeId: string | null,
+  anchorNodeId: string,
+): HighlightResult {
+  const highlightedNodeIds = new Set<string>()
+  const highlightedEdgeIds = new Set<string>()
+
+  // Always highlight the anchor node
+  highlightedNodeIds.add(anchorNodeId)
+
+  if (hoveredNodeId && shortestPaths.has(hoveredNodeId)) {
+    const { path, edges } = shortestPaths.get(hoveredNodeId)!
+
+    // Highlight all nodes in the path
+    path.forEach(id => highlightedNodeIds.add(id))
+
+    // Highlight all edges in the path
+    edges.forEach(id => highlightedEdgeIds.add(id))
+  }
+
+  return { highlightedNodeIds, highlightedEdgeIds }
+}

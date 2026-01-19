@@ -1058,7 +1058,8 @@ relations:
       description: null
       source: frontend
       target: checkoutservice
-      properties: []
+      properties:
+        - test: some value
       operations: []
   - frontend_connectsTo_currencyservice:
       type: ConnectsTo

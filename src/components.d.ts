@@ -75,5 +75,7 @@ declare module 'vue' {
     TooltipTrigger: typeof import('./components/ui/tooltip/TooltipTrigger.vue')['default']
     TransformDialog: typeof import('./components/dialogs/TransformDialog.vue')['default']
     TransformPanel: typeof import('./components/TransformPanel.vue')['default']
+    Tree: typeof import('./components/ui/tree/Tree.vue')['default']
+    TreeItem: typeof import('./components/ui/tree/TreeItem.vue')['default']
   }
 }

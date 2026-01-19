@@ -1,6 +1,7 @@
 import type { Node } from '@vue-flow/core'
 import type { EdmmDeploymentModel } from './io'
 import dagre from '@dagrejs/dagre'
+import ELK from 'elkjs/lib/elk.bundled.js'
 import { computeDependentCounts } from './graph-highlighting'
 
 // Node dimensions
@@ -38,23 +39,38 @@ export type HostedOnRelationDisplay = 'HIDE' | 'GROUP' | 'SHOW'
 
 export type LayoutDirection = 'vertical' | 'horizontal'
 
+export type LayoutAlgorithm = 'default' | 'layered' | 'force' | 'mrtree'
+
 export interface LayoutConfig {
   hostedOnRelationDisplay: HostedOnRelationDisplay
-  interactionMode: 'NORMAL' | 'HIGHLIGHT_DIRECT_SUCCESSORS' | 'HIGHLIGHT_DIRECT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS'
+  interactionMode: 'NORMAL' | 'HIGHLIGHT_DIRECT_SUCCESSORS' | 'HIGHLIGHT_DIRECT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS' | 'SHORTEST_PATH'
   showEdgeLabels: boolean
-  /** Which relation types to use for calculating node positions (affects layout) */
-  layoutRelations: RelationType[]
-  /** Which relation types to display as edges (affects visibility) */
+  /** Which relation types to display and use for layout */
   visibleRelations: RelationType[]
   /** Direction of the graph layout */
   layoutDirection: LayoutDirection
   /** Whether to scale nodes based on their dependency count */
   scaleWithDependencies: boolean
+  /** Which algorithm to use for layout: 'default' (dagre) or 'layered' (elkjs) */
+  layoutAlgorithm: LayoutAlgorithm
+}
+
+export interface EdgeData {
+  id: string
+  source: string
+  target: string
+  label?: string
+  /** Description of the relation (if any) */
+  description?: string | null
+  /** Properties defined on the relation */
+  properties?: Record<string, unknown>
+  /** Operations defined on the relation */
+  operations?: Record<string, unknown>
 }
 
 export interface LayoutResult {
   nodes: Node[]
-  edges: Array<{ id: string, source: string, target: string, label?: string }>
+  edges: EdgeData[]
 }
 
 /**
@@ -93,8 +109,8 @@ export function buildHostChildrenMap(hostedOnMap: Record<string, string>): Recor
 export function computeEdges(
   model: EdmmDeploymentModel,
   config: LayoutConfig,
-): Array<{ id: string, source: string, target: string, label?: string }> {
-  const collection: Array<{ id: string, source: string, target: string, label?: string }> = []
+): EdgeData[] {
+  const collection: EdgeData[] = []
 
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
@@ -111,6 +127,9 @@ export function computeEdges(
         source: relation.source,
         target: relation.target,
         label: relation.type,
+        description: relation.description,
+        properties: relation.properties,
+        operations: relation.operations,
       })
     })
   }
@@ -160,8 +179,8 @@ function runFlatDagreLayout(
     Object.values(model.relations).forEach((relation) => {
       const relationType = getRelationType(relation.type)
 
-      // Skip if relation type is not in layout list
-      if (relationType && !config.layoutRelations.includes(relationType)) {
+      // Skip if relation type is not in visible relations list
+      if (relationType && !config.visibleRelations.includes(relationType)) {
         return
       }
 
@@ -325,8 +344,8 @@ function runHierarchicalDagreLayout(
     Object.values(model.relations).forEach((relation) => {
       const relationType = getRelationType(relation.type)
 
-      // Skip if relation type is not in layout list
-      if (relationType && !config.layoutRelations.includes(relationType)) {
+      // Skip if relation type is not in visible relations list
+      if (relationType && !config.visibleRelations.includes(relationType)) {
         return
       }
 
@@ -402,14 +421,149 @@ export function runDagreLayout(
 }
 
 /**
- * Compute the full layout result (nodes + edges)
- * Note: This is now synchronous since dagre is synchronous
+ * Run ELK layout for flat graph using the layered algorithm
  */
-export function computeGraphLayout(
+async function runElkLayout(
   model: EdmmDeploymentModel,
   config: LayoutConfig,
-): LayoutResult {
-  const nodes = runDagreLayout(model, config)
+  nodeScales: Map<string, number>,
+): Promise<Node[]> {
+  const elk = new ELK()
+  const componentIds = Object.keys(model.components)
+
+  // Build ELK graph structure
+  const children = componentIds.map((id) => {
+    const scale = nodeScales.get(id) ?? 1
+    const width = Math.round(NODE_WIDTH * scale)
+    const height = Math.round(NODE_HEIGHT * scale)
+    return { id, width, height }
+  })
+
+  // Build edges for ELK (only visible relations)
+  const edges: Array<{ id: string, sources: string[], targets: string[] }> = []
+  if (model.relations) {
+    Object.entries(model.relations).forEach(([relationId, relation]) => {
+      const relationType = getRelationType(relation.type)
+
+      // Skip if relation type is not in visible relations list
+      if (relationType && !config.visibleRelations.includes(relationType)) {
+        return
+      }
+
+      const isHostedOn = relationType === RelationType.HostedOn
+
+      // Include edge based on mode (same logic as dagre)
+      if (config.hostedOnRelationDisplay === 'SHOW' || !isHostedOn) {
+        edges.push({
+          id: relationId,
+          sources: [relation.source],
+          targets: [relation.target],
+        })
+      }
+    })
+  }
+
+  // Build algorithm-specific layout options
+  const getLayoutOptions = (): Record<string, string> => {
+    const baseOptions: Record<string, string> = {
+      'elk.padding': '[top=20,left=20,bottom=20,right=20]',
+    }
+
+    switch (config.layoutAlgorithm) {
+      case 'force':
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'force',
+          'elk.force.iterations': '300',
+          'elk.spacing.nodeNode': '80',
+        }
+      case 'mrtree':
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'mrtree',
+          'elk.direction': config.layoutDirection === 'vertical' ? 'DOWN' : 'RIGHT',
+          'elk.spacing.nodeNode': '50',
+          'elk.mrtree.weighting': 'CONSTRAINT',
+        }
+      case 'layered':
+      default:
+        return {
+          ...baseOptions,
+          'elk.algorithm': 'layered',
+          'elk.direction': config.layoutDirection === 'vertical' ? 'DOWN' : 'RIGHT',
+          'elk.spacing.nodeNode': '100',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '200',
+        }
+    }
+  }
+
+  const graph = {
+    id: 'root',
+    layoutOptions: getLayoutOptions(),
+    children,
+    edges,
+  }
+
+  const layoutedGraph = await elk.layout(graph)
+
+  // Convert ELK result to Vue Flow nodes
+  return componentIds.map((id) => {
+    const elkNode = layoutedGraph.children?.find(n => n.id === id)
+    const component = model.components[id]
+    const scale = nodeScales.get(id) ?? 1
+    const width = Math.round(NODE_WIDTH * scale)
+    const height = Math.round(NODE_HEIGHT * scale)
+
+    // Base styling values
+    const baseFontSize = 14
+    const baseBorderRadius = 12
+    const basePaddingV = 12
+    const basePaddingH = 16
+
+    return {
+      id,
+      position: {
+        x: elkNode?.x ?? 0,
+        y: elkNode?.y ?? 0,
+      },
+      data: {
+        label: id,
+        type: component?.type ?? 'unknown',
+        scale: scale !== 1 ? scale : undefined,
+        dependentCount: nodeScales.has(id) && scale > 1 ? Math.round((scale - 1) * 2 * nodeScales.size) : undefined,
+      },
+      class: 'edmm-node',
+      style: {
+        width: `${width}px`,
+        height: `${height}px`,
+        fontSize: `${Math.round(baseFontSize * scale)}px`,
+        borderRadius: `${Math.round(baseBorderRadius * scale)}px`,
+        padding: `${Math.round(basePaddingV * scale)}px ${Math.round(basePaddingH * scale)}px`,
+      },
+    }
+  })
+}
+
+/**
+ * Compute the full layout result (nodes + edges)
+ * Returns a Promise since ELK layout is async
+ */
+export async function computeGraphLayout(
+  model: EdmmDeploymentModel,
+  config: LayoutConfig,
+): Promise<LayoutResult> {
+  let nodes: Node[]
+
+  if (config.layoutAlgorithm !== 'default') {
+    // Use ELK for layered, force, and mrtree algorithms (does not support GROUP mode)
+    const nodeScales = computeNodeScales(model, config)
+    nodes = await runElkLayout(model, config, nodeScales)
+  }
+  else {
+    // Default: use dagre
+    nodes = runDagreLayout(model, config)
+  }
+
   const edges = computeEdges(model, config)
 
   return { nodes, edges }

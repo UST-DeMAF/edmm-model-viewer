@@ -1,5 +1,6 @@
 import type {
   HostedOnRelationDisplay,
+  LayoutAlgorithm,
   LayoutConfig,
   LayoutDirection,
   RelationType,
@@ -13,26 +14,32 @@ import {
 
 export type InteractionMode = LayoutConfig['interactionMode']
 
+export type TypeDifferentiationMode = 'DISABLED' | 'COLOR' | 'SHAPE'
+
 interface GraphSettingsState {
   hostedOnRelationDisplay: HostedOnRelationDisplay
   interactionMode: InteractionMode
   showEdgeLabels: boolean
-  layoutRelations: RelationType[]
   visibleRelations: RelationType[]
   layoutDirection: LayoutDirection
+  layoutAlgorithm: LayoutAlgorithm
   visibleNodeTypes: string[]
   scaleWithDependencies: boolean
+  typeDifferentiationMode: TypeDifferentiationMode
+  shortestPathAnchorNode: string | null
 }
 
 const DEFAULT_STATE: GraphSettingsState = {
   hostedOnRelationDisplay: 'SHOW',
   interactionMode: 'NORMAL',
   showEdgeLabels: false,
-  layoutRelations: [...ALL_RELATION_TYPES],
   visibleRelations: [...ALL_RELATION_TYPES],
   layoutDirection: 'horizontal',
+  layoutAlgorithm: 'default',
   visibleNodeTypes: [], // Empty = show all types
   scaleWithDependencies: false,
+  typeDifferentiationMode: 'DISABLED',
+  shortestPathAnchorNode: null,
 }
 
 export const useGraphSettingsStore = defineStore('graph-settings', () => {
@@ -59,11 +66,6 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     set: val => state.value.showEdgeLabels = val,
   })
 
-  const layoutRelations = computed({
-    get: () => state.value.layoutRelations,
-    set: val => state.value.layoutRelations = val,
-  })
-
   const visibleRelations = computed({
     get: () => state.value.visibleRelations,
     set: val => state.value.visibleRelations = val,
@@ -72,6 +74,11 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
   const layoutDirection = computed({
     get: () => state.value.layoutDirection,
     set: val => state.value.layoutDirection = val,
+  })
+
+  const layoutAlgorithm = computed({
+    get: () => state.value.layoutAlgorithm,
+    set: val => state.value.layoutAlgorithm = val,
   })
 
   const visibleNodeTypes = computed({
@@ -84,31 +91,27 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     set: val => state.value.scaleWithDependencies = val,
   })
 
+  const typeDifferentiationMode = computed({
+    get: () => state.value.typeDifferentiationMode,
+    set: val => state.value.typeDifferentiationMode = val,
+  })
+
+  // Shortest path anchor node (non-persisted state that resets when mode changes)
+  const shortestPathAnchorNode = computed({
+    get: () => state.value.shortestPathAnchorNode,
+    set: val => state.value.shortestPathAnchorNode = val,
+  })
+
   // Computed config for use in graph layout
   const config = computed<LayoutConfig>(() => ({
     hostedOnRelationDisplay: hostedOnRelationDisplay.value,
     interactionMode: interactionMode.value,
     showEdgeLabels: showEdgeLabels.value,
-    layoutRelations: layoutRelations.value,
     visibleRelations: visibleRelations.value,
     layoutDirection: layoutDirection.value,
+    layoutAlgorithm: layoutAlgorithm.value,
     scaleWithDependencies: scaleWithDependencies.value,
   }))
-
-  // Helper to check/toggle layout relation types
-  function isLayoutRelationEnabled(type: RelationType): boolean {
-    return state.value.layoutRelations.includes(type)
-  }
-
-  function toggleLayoutRelation(type: RelationType): void {
-    const index = state.value.layoutRelations.indexOf(type)
-    if (index === -1) {
-      state.value.layoutRelations = [...state.value.layoutRelations, type]
-    }
-    else {
-      state.value.layoutRelations = state.value.layoutRelations.filter(t => t !== type)
-    }
-  }
 
   // Helper to check/toggle visible relation types
   function isVisibleRelationEnabled(type: RelationType): boolean {
@@ -136,18 +139,18 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     hostedOnRelationDisplay,
     interactionMode,
     showEdgeLabels,
-    layoutRelations,
     visibleRelations,
     layoutDirection,
+    layoutAlgorithm,
     visibleNodeTypes,
     scaleWithDependencies,
+    typeDifferentiationMode,
+    shortestPathAnchorNode,
     searchQuery,
     isSearchOpen,
     // Computed
     config,
     // Actions
-    isLayoutRelationEnabled,
-    toggleLayoutRelation,
     isVisibleRelationEnabled,
     toggleVisibleRelation,
     resetToDefaults,

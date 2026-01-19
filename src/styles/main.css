@@ -123,12 +123,22 @@ html.dark {
   display: none !important;
 }
 
-/* Make edges non-interactable so panning works through them */
+/* Make edges non-interactable by default so panning works through them */
 .vue-flow__edge {
-  pointer-events: none !important;
+  pointer-events: none;
 }
 
 .vue-flow__edge-path,
 .vue-flow__edge-interaction {
-  pointer-events: none !important;
+  pointer-events: none;
+}
+
+/* Allow hoverable edges (with metadata) to receive pointer events */
+.vue-flow__edge.edmm-edge--hoverable {
+  pointer-events: auto;
+}
+
+.vue-flow__edge.edmm-edge--hoverable .vue-flow__edge-path,
+.vue-flow__edge.edmm-edge--hoverable .vue-flow__edge-interaction {
+  pointer-events: auto;
 }

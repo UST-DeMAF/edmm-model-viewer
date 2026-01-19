@@ -30,7 +30,7 @@ const emit = defineEmits<{
 
 const store = useGraphSettingsStore()
 
-const { layoutRelations, searchQuery, layoutDirection, interactionMode, visibleNodeTypes, isSearchOpen, scaleWithDependencies } = storeToRefs(store)
+const { searchQuery, layoutDirection, layoutAlgorithm, interactionMode, visibleNodeTypes, isSearchOpen, scaleWithDependencies, typeDifferentiationMode } = storeToRefs(store)
 
 function openSearch() {
   isSearchOpen.value = true
@@ -48,20 +48,6 @@ onKeyStroke('f', (e) => {
     openSearch()
   }
 })
-
-function isLayoutRelationEnabled(relation: string): boolean {
-  return layoutRelations.value.includes(relation as typeof layoutRelations.value[number])
-}
-
-function toggleLayoutRelation(relation: string): void {
-  const typedRelation = relation as typeof layoutRelations.value[number]
-  if (isLayoutRelationEnabled(relation)) {
-    layoutRelations.value = layoutRelations.value.filter(r => r !== typedRelation)
-  }
-  else {
-    layoutRelations.value = [...layoutRelations.value, typedRelation]
-  }
-}
 
 const altKeyState = useKeyModifier('Alt')
 
@@ -107,47 +93,21 @@ onKeyStroke('Alt', (e) => {
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuLabel>Layout Relations</DropdownMenuLabel>
-          <DropdownMenuCheckboxItem
-            :model-value="isLayoutRelationEnabled('HostedOn')"
-            @update:model-value="toggleLayoutRelation('HostedOn')"
-            @select.prevent
-          >
-            <span class="inline-flex gap-2 items-center">
-              <span class="rounded-full bg-[var(--chart-1)] size-2.5" />
-              HostedOn
-            </span>
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            :model-value="isLayoutRelationEnabled('ConnectsTo')"
-            @update:model-value="toggleLayoutRelation('ConnectsTo')"
-            @select.prevent
-          >
-            <span class="inline-flex gap-2 items-center">
-              <span class="rounded-full bg-[var(--chart-2)] size-2.5" />
-              ConnectsTo
-            </span>
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            :model-value="isLayoutRelationEnabled('AttachesTo')"
-            @update:model-value="toggleLayoutRelation('AttachesTo')"
-            @select.prevent
-          >
-            <span class="inline-flex gap-2 items-center">
-              <span class="rounded-full bg-[var(--chart-3)] size-2.5" />
-              AttachesTo
-            </span>
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
-            :model-value="isLayoutRelationEnabled('DependsOn')"
-            @update:model-value="toggleLayoutRelation('DependsOn')"
-            @select.prevent
-          >
-            <span class="inline-flex gap-2 items-center">
-              <span class="rounded-full bg-[var(--chart-4)] size-2.5" />
-              DependsOn
-            </span>
-          </DropdownMenuCheckboxItem>
+          <DropdownMenuLabel>Layout Algorithm</DropdownMenuLabel>
+          <DropdownMenuRadioGroup v-model="layoutAlgorithm">
+            <DropdownMenuRadioItem value="default" @select.prevent>
+              Default
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="layered" @select.prevent>
+              Layered
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="force" @select.prevent>
+              Force
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="mrtree" @select.prevent>
+              Tree
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
           <DropdownMenuCheckboxItem
             v-model="scaleWithDependencies"
@@ -158,6 +118,23 @@ onKeyStroke('Alt', (e) => {
               Scale with Dependencies
             </span>
           </DropdownMenuCheckboxItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Type Differentiation</DropdownMenuLabel>
+          <DropdownMenuRadioGroup v-model="typeDifferentiationMode">
+            <DropdownMenuRadioItem value="DISABLED" @select.prevent>
+              Disabled
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="COLOR" @select.prevent>
+              <span class="inline-flex gap-2 items-center">
+                Color
+              </span>
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="SHAPE" @select.prevent>
+              <span class="inline-flex gap-2 items-center">
+                Shape
+              </span>
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
       <DropdownMenu>
@@ -217,7 +194,7 @@ onKeyStroke('Alt', (e) => {
           <div>
             <Tooltip :open="showTooltips">
               <TooltipTrigger as-child>
-                <Button :variant="interactionMode !== 'NORMAL' ? 'default' : 'ghost'" size="icon">
+                <Button :variant="interactionMode !== 'NORMAL' && interactionMode !== 'SHORTEST_PATH' ? 'default' : 'ghost'" size="icon">
                   <i class="i-mingcute-finger-tap-line size-5" />
                 </Button>
               </TooltipTrigger>
@@ -242,6 +219,20 @@ onKeyStroke('Alt', (e) => {
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+      <Tooltip :open="showTooltips">
+        <TooltipTrigger as-child>
+          <Button
+            :variant="interactionMode === 'SHORTEST_PATH' ? 'default' : 'ghost'"
+            size="icon"
+            @click="interactionMode = 'SHORTEST_PATH'"
+          >
+            <i class="i-lucide-route size-5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          Shortest Path Mode
+        </TooltipContent>
+      </Tooltip>
       <GraphSearch v-if="isSearchOpen" v-model="searchQuery" @close="closeSearch" />
     </div>
     <div class="grow" />

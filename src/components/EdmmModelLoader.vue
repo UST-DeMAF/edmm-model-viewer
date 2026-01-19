@@ -4,6 +4,7 @@ import { AlertCircle, FileText, Loader2, Upload } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 import { parseAndValidateEdmm } from '~/lib/io'
 import { fetchTADM } from '~/services/transformation-service'
+import { useGraphStore } from '~/stores/graph'
 
 const props = defineProps<{
   /** Optional: Load model from backend by transformation process ID */
@@ -11,6 +12,8 @@ const props = defineProps<{
   /** Optional: Show minimal UI (just status, no file picker) */
   minimal?: boolean
 }>()
+
+const graphStore = useGraphStore()
 
 const model = ref<EdmmDeploymentModel | null>(null)
 const errorMessage = ref<string | null>(null)
@@ -34,6 +37,7 @@ async function handleFileChange(event: Event) {
 
     if (result.success && result.data) {
       model.value = result.data
+      graphStore.setModel(result.data)
     }
     else {
       errorMessage.value = result.errors?.join(' | ') ?? 'Model failed to validate'
@@ -61,6 +65,7 @@ async function loadFromBackend(transformationId: string) {
 
     if (result.success && result.data) {
       model.value = result.data
+      graphStore.setModel(result.data)
     }
     else {
       errorMessage.value = result.errors?.join(' | ') ?? 'Model failed to validate'
@@ -98,6 +103,7 @@ onMounted(async () => {
       const result = parseAndValidateEdmm(testYaml)
       if (result.success && result.data) {
         model.value = result.data
+        graphStore.setModel(result.data)
       }
       else {
         errorMessage.value = result.errors?.join(' | ') ?? 'Model failed to validate'

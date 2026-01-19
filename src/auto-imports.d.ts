@@ -169,6 +169,7 @@ declare global {
   const useElementBounding: typeof import('@vueuse/core')['useElementBounding']
   const useElementByPoint: typeof import('@vueuse/core')['useElementByPoint']
   const useElementHover: typeof import('@vueuse/core')['useElementHover']
+  const useElementInfoPanelStore: typeof import('./stores/element-info-panel')['useElementInfoPanelStore']
   const useElementSize: typeof import('@vueuse/core')['useElementSize']
   const useElementVisibility: typeof import('@vueuse/core')['useElementVisibility']
   const useEventBus: typeof import('@vueuse/core')['useEventBus']
@@ -186,6 +187,7 @@ declare global {
   const useGamepad: typeof import('@vueuse/core')['useGamepad']
   const useGeolocation: typeof import('@vueuse/core')['useGeolocation']
   const useGraphSettingsStore: typeof import('./stores/graph-settings')['useGraphSettingsStore']
+  const useGraphStore: typeof import('./stores/graph')['useGraphStore']
   const useHead: typeof import('@unhead/vue')['useHead']
   const useHeadSafe: typeof import('@unhead/vue')['useHeadSafe']
   const useHoveredNode: typeof import('./composables/useHoveredNode')['useHoveredNode']
@@ -319,11 +321,14 @@ declare global {
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
-  export type { InteractionMode } from './stores/graph-settings'
+  export type { ElementInfoPanelState } from './stores/element-info-panel'
+  import('./stores/element-info-panel')
+  // @ts-ignore
+  export type { InteractionMode, TypeDifferentiationMode } from './stores/graph-settings'
   import('./stores/graph-settings')
   // @ts-ignore
-  export type { NodeInfoPanelState } from './stores/node-info-panel'
-  import('./stores/node-info-panel')
+  export type { RelationTypeInfo } from './stores/graph'
+  import('./stores/graph')
   // @ts-ignore
   export type { Transformation } from './stores/transformations'
   import('./stores/transformations')
@@ -494,6 +499,7 @@ declare module 'vue' {
     readonly useElementBounding: UnwrapRef<typeof import('@vueuse/core')['useElementBounding']>
     readonly useElementByPoint: UnwrapRef<typeof import('@vueuse/core')['useElementByPoint']>
     readonly useElementHover: UnwrapRef<typeof import('@vueuse/core')['useElementHover']>
+    readonly useElementInfoPanelStore: UnwrapRef<typeof import('./stores/element-info-panel')['useElementInfoPanelStore']>
     readonly useElementSize: UnwrapRef<typeof import('@vueuse/core')['useElementSize']>
     readonly useElementVisibility: UnwrapRef<typeof import('@vueuse/core')['useElementVisibility']>
     readonly useEventBus: UnwrapRef<typeof import('@vueuse/core')['useEventBus']>
@@ -511,6 +517,7 @@ declare module 'vue' {
     readonly useGamepad: UnwrapRef<typeof import('@vueuse/core')['useGamepad']>
     readonly useGeolocation: UnwrapRef<typeof import('@vueuse/core')['useGeolocation']>
     readonly useGraphSettingsStore: UnwrapRef<typeof import('./stores/graph-settings')['useGraphSettingsStore']>
+    readonly useGraphStore: UnwrapRef<typeof import('./stores/graph')['useGraphStore']>
     readonly useHead: UnwrapRef<typeof import('@unhead/vue')['useHead']>
     readonly useHeadSafe: UnwrapRef<typeof import('@unhead/vue')['useHeadSafe']>
     readonly useHoveredNode: UnwrapRef<typeof import('./composables/useHoveredNode')['useHoveredNode']>
@@ -540,7 +547,6 @@ declare module 'vue' {
     readonly useMutationObserver: UnwrapRef<typeof import('@vueuse/core')['useMutationObserver']>
     readonly useNavigatorLanguage: UnwrapRef<typeof import('@vueuse/core')['useNavigatorLanguage']>
     readonly useNetwork: UnwrapRef<typeof import('@vueuse/core')['useNetwork']>
-    readonly useNodeInfoPanelStore: UnwrapRef<typeof import('./stores/node-info-panel')['useNodeInfoPanelStore']>
     readonly useNow: UnwrapRef<typeof import('@vueuse/core')['useNow']>
     readonly useObjectUrl: UnwrapRef<typeof import('@vueuse/core')['useObjectUrl']>
     readonly useOffsetPagination: UnwrapRef<typeof import('@vueuse/core')['useOffsetPagination']>
@@ -608,7 +614,6 @@ declare module 'vue' {
     readonly useTransition: UnwrapRef<typeof import('@vueuse/core')['useTransition']>
     readonly useUrlSearchParams: UnwrapRef<typeof import('@vueuse/core')['useUrlSearchParams']>
     readonly useUserMedia: UnwrapRef<typeof import('@vueuse/core')['useUserMedia']>
-    readonly useUserStore: UnwrapRef<typeof import('./stores/user')['useUserStore']>
     readonly useVModel: UnwrapRef<typeof import('@vueuse/core')['useVModel']>
     readonly useVModels: UnwrapRef<typeof import('@vueuse/core')['useVModels']>
     readonly useVibrate: UnwrapRef<typeof import('@vueuse/core')['useVibrate']>

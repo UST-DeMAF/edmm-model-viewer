@@ -15,8 +15,10 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { parseAndValidateEdmm } from '~/lib/io'
+import { useGraphStore } from '~/stores/graph'
 import { useTransformationStore } from '~/stores/transformations'
 
+const graphStore = useGraphStore()
 const transformationStore = useTransformationStore()
 
 type ViewMode = 'welcome' | 'local' | 'transformation' | 'demo'
@@ -41,6 +43,7 @@ async function openDemoModel() {
     const result = parseAndValidateEdmm(demoYaml)
     if (result.success && result.data) {
       demoModel.value = result.data
+      graphStore.setModel(result.data)
       viewMode.value = 'demo'
     }
   }
@@ -74,6 +77,7 @@ async function handleLocalFileChange(event: Event) {
 
     if (result.success && result.data) {
       localModel.value = result.data
+      graphStore.setModel(result.data)
       viewMode.value = 'local'
     }
     else {
@@ -106,6 +110,7 @@ function handleTransformationComplete(payload: { id: string, name: string }) {
 function closeGraph() {
   viewMode.value = 'welcome'
   transformationStore.setActiveTransformation(null)
+  graphStore.clearModel()
 }
 
 onMounted(async () => {
@@ -119,6 +124,7 @@ onMounted(async () => {
       const result = parseAndValidateEdmm(testYaml)
       if (result.success && result.data) {
         localModel.value = result.data
+        graphStore.setModel(result.data)
         viewMode.value = 'local'
       }
       else {

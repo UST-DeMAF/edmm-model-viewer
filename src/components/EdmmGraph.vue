@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Edge, Node } from '@vue-flow/core'
-import type { ComponentAssignment, EdmmDeploymentModel } from '~/lib/io'
+import type { ComponentAssignment } from '~/lib/io'
 import { Background } from '@vue-flow/background'
 import { useVueFlow, VueFlow } from '@vue-flow/core'
 import { useHoveredNode } from '~/composables/useHoveredNode'
@@ -8,23 +8,28 @@ import {
   applyEdgeHighlights,
   applyNodeHighlights,
   computeHighlights,
+  computeShortestPathHighlights,
+  computeShortestPaths,
 } from '~/lib/graph-highlighting'
 import { computeGraphLayout, getRelationType } from '~/lib/graph-layout'
 import { isTypeVisible } from '~/lib/type-hierarchy'
+import { useGraphStore } from '~/stores/graph'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
 import EdgeLegend from './EdgeLegend.vue'
+import ElementInfoPanel from './ElementInfoPanel.vue'
 import EdmmEdge from './graph/EdmmEdge.vue'
 import EdmmNode from './graph/EdmmNode.vue'
 import GraphSettings from './GraphSettings.vue'
-import NodeInfoPanel from './NodeInfoPanel.vue'
-
-const props = defineProps<{
-  model: EdmmDeploymentModel
-}>()
 
 const emit = defineEmits<{
   close: []
 }>()
+
+// Access the graph store for the model
+const graphStore = useGraphStore()
+
+// Computed property for safe model access
+const model = computed(() => graphStore.model)
 
 // Mark components as raw to prevent Vue reactivity warnings
 const nodeTypes = {
@@ -41,42 +46,113 @@ const hoveredNode = useHoveredNode()
 // Selected node for info panel (triggered on click)
 const selectedNode = shallowRef<Node | null>(null)
 
-const { onNodeClick, onPaneClick } = useVueFlow()
+// Selected edge for info panel (triggered on click)
+const selectedEdge = shallowRef<Edge | null>(null)
 
-onNodeClick(({ node }) => {
-  selectedNode.value = node.data?.isGroupNode ? null : node
-})
-onPaneClick(() => selectedNode.value = null)
-
-// Get the component data for the selected node
-const selectedComponent = computed<ComponentAssignment | null>(() => {
-  if (!selectedNode.value)
-    return null
-  return props.model.components[selectedNode.value.id] ?? null
-})
+// Hovered edge for glow effect (tracked via edge mouse events)
+const hoveredEdgeId = ref<string | null>(null)
 
 // Use the graph settings store
 const settingsStore = useGraphSettingsStore()
 
+const { onNodeClick, onEdgeClick, onPaneClick } = useVueFlow()
+
+onNodeClick(({ node }) => {
+  // In SHORTEST_PATH mode, clicking sets the anchor node instead of selecting
+  if (settingsStore.interactionMode === 'SHORTEST_PATH') {
+    if (!node.data?.isGroupNode) {
+      settingsStore.shortestPathAnchorNode = node.id
+    }
+  }
+  else {
+    selectedNode.value = node.data?.isGroupNode ? null : node
+    selectedEdge.value = null // Clear edge selection when node is selected
+  }
+})
+
+onEdgeClick(({ edge }) => {
+  // Check if edge has metadata worth displaying
+  const data = edge.data
+  const hasMetadata = (data?.description !== null && data?.description !== undefined && data?.description !== '')
+    || (data?.properties && Object.keys(data.properties).length > 0)
+    || (data?.operations && Object.keys(data.operations).length > 0)
+
+  if (hasMetadata) {
+    selectedEdge.value = edge
+    selectedNode.value = null // Clear node selection when edge is selected
+  }
+})
+
+onPaneClick(() => {
+  selectedNode.value = null
+  selectedEdge.value = null
+  // Clear anchor node when clicking on pane in SHORTEST_PATH mode
+  if (settingsStore.interactionMode === 'SHORTEST_PATH') {
+    settingsStore.shortestPathAnchorNode = null
+  }
+})
+
+// Get the component data for the selected node
+const selectedComponent = computed<ComponentAssignment | null>(() => {
+  if (!selectedNode.value || !model.value)
+    return null
+  return model.value.components[selectedNode.value.id] ?? null
+})
+
+// Get the relation data for the selected edge
+const selectedRelation = computed(() => {
+  if (!selectedEdge.value || !model.value?.relations)
+    return null
+  // The edge ID is the relation name in the model
+  return model.value.relations[selectedEdge.value.id] ?? null
+})
+
 // Reactive state for laid out nodes and edges
 const layoutedNodes = ref<Node[]>([])
-const rawEdges = ref<Array<{ id: string, source: string, target: string, label?: string }>>([])
+const rawEdges = ref<Array<{ id: string, source: string, target: string, label?: string, description?: string | null, properties?: Record<string, unknown>, operations?: Record<string, unknown> }>>([])
 
 // Run layout when model or config changes
 watch(
-  [() => props.model, () => settingsStore.config],
-  () => {
-    const result = computeGraphLayout(props.model, settingsStore.config)
+  [model, () => settingsStore.config],
+  async () => {
+    if (!model.value)
+      return
+    const result = await computeGraphLayout(model.value, settingsStore.config)
     layoutedNodes.value = result.nodes
     rawEdges.value = result.edges
   },
   { immediate: true, deep: true },
 )
 
+// Compute shortest paths from anchor node (for SHORTEST_PATH mode)
+const shortestPaths = computed(() => {
+  const anchorNode = settingsStore.shortestPathAnchorNode
+  if (!anchorNode || settingsStore.interactionMode !== 'SHORTEST_PATH' || !model.value) {
+    return new Map<string, { path: string[], edges: string[] }>()
+  }
+  return computeShortestPaths(model.value, anchorNode, settingsStore.config.visibleRelations)
+})
+
 // Compute highlighted nodes and edges based on hovered node and interaction mode
 const highlights = computed(() => {
+  // Handle SHORTEST_PATH mode separately
+  if (settingsStore.interactionMode === 'SHORTEST_PATH') {
+    const anchorNode = settingsStore.shortestPathAnchorNode
+    if (anchorNode) {
+      return computeShortestPathHighlights(
+        shortestPaths.value,
+        hoveredNode.value?.id ?? null,
+        anchorNode,
+      )
+    }
+    return { highlightedNodeIds: new Set<string>(), highlightedEdgeIds: new Set<string>() }
+  }
+
+  if (!model.value) {
+    return { highlightedNodeIds: new Set<string>(), highlightedEdgeIds: new Set<string>() }
+  }
   return computeHighlights(
-    props.model,
+    model.value,
     hoveredNode.value?.id ?? null,
     settingsStore.interactionMode,
     settingsStore.config.visibleRelations,
@@ -86,10 +162,15 @@ const highlights = computed(() => {
 // Apply highlighting to nodes (skip hover highlighting in NORMAL mode)
 const displayNodes = computed<Node[]>(() => {
   const isNormalMode = settingsStore.interactionMode === 'NORMAL'
+  const isShortestPathMode = settingsStore.interactionMode === 'SHORTEST_PATH'
+  // For SHORTEST_PATH mode: hasSelection = anchor node set AND hovering
+  const shortestPathActive = isShortestPathMode && !!settingsStore.shortestPathAnchorNode && !!hoveredNode.value
+  const hasSelection = (!isNormalMode && !isShortestPathMode && !!hoveredNode.value) || shortestPathActive
+
   let nodes = applyNodeHighlights(
     layoutedNodes.value,
     highlights.value.highlightedNodeIds,
-    !isNormalMode && !!hoveredNode.value,
+    hasSelection,
   )
 
   // Check if search is active (search panel is open)
@@ -103,7 +184,7 @@ const displayNodes = computed<Node[]>(() => {
   // Both search and hover interaction override node type filter while active
   if (!isSearchActive && !isHoverInteractionActive) {
     const visibleTypes = settingsStore.visibleNodeTypes ?? []
-    const componentTypes = props.model.component_types ?? {}
+    const componentTypes = model.value?.component_types ?? {}
     if (visibleTypes.length > 0) {
       nodes = nodes.map((node) => {
         const nodeType = node.data?.type ?? ''
@@ -146,9 +227,27 @@ const displayNodes = computed<Node[]>(() => {
     if (node.data?.highlighted)
       classes.push('edmm-node--highlighted')
 
+    // Add type-based color if COLOR mode is enabled
+    const typeColor = settingsStore.typeDifferentiationMode === 'COLOR' && node.data?.type
+      ? graphStore.getComponentTypeColor(node.data.type)
+      : undefined
+
+    if (typeColor)
+      classes.push('edmm-node--type-colored')
+
+    // Merge type color CSS variable with existing node style (preserving dimensions)
+    const mergedStyle = typeColor
+      ? { ...node.style, '--type-color': typeColor }
+      : node.style
+
     return {
       ...node,
       class: classes.join(' '),
+      style: mergedStyle,
+      data: {
+        ...node.data,
+        typeColor,
+      },
     }
   })
 })
@@ -163,34 +262,106 @@ const displayEdges = computed<Edge[]>(() => {
     return !relationType || settingsStore.config.visibleRelations.includes(relationType)
   })
 
-  const edgesWithData = filteredEdges.map(edge => ({
-    ...edge,
-    type: 'edmm',
-    data: {
-      label: settingsStore.showEdgeLabels ? edge.label : undefined,
-      relationType: edge.label ? getRelationType(edge.label) : null,
-    },
-  }))
+  // Check if node type filter is active (and no search/hover override)
+  const isSearchActive = settingsStore.isSearchOpen
   const isNormalMode = settingsStore.interactionMode === 'NORMAL'
-  return applyEdgeHighlights(
+  const isShortestPathMode = settingsStore.interactionMode === 'SHORTEST_PATH'
+  const isHoverInteractionActive = !isNormalMode && !isShortestPathMode && !!hoveredNode.value
+  const visibleTypes = settingsStore.visibleNodeTypes ?? []
+  const componentTypes = model.value?.component_types ?? {}
+
+  // Determine if node type filtering should dim edges
+  const shouldApplyNodeTypeFilter = !isSearchActive && !isHoverInteractionActive && visibleTypes.length > 0
+
+  // Build a set of visible node IDs for edge filtering
+  const visibleNodeIds = new Set<string>()
+  if (shouldApplyNodeTypeFilter) {
+    for (const node of layoutedNodes.value) {
+      const nodeType = node.data?.type ?? ''
+      if (isTypeVisible(nodeType, visibleTypes, componentTypes)) {
+        visibleNodeIds.add(node.id)
+      }
+    }
+  }
+
+  const edgesWithData = filteredEdges.map((edge) => {
+    // Check if edge should be dimmed based on node type filter
+    let edgeDimmedByFilter = false
+    if (shouldApplyNodeTypeFilter) {
+      // Edge is dimmed if NEITHER source NOR target is a visible node type
+      const sourceVisible = visibleNodeIds.has(edge.source)
+      const targetVisible = visibleNodeIds.has(edge.target)
+      edgeDimmedByFilter = !sourceVisible && !targetVisible
+    }
+
+    return {
+      ...edge,
+      type: 'edmm',
+      data: {
+        label: settingsStore.showEdgeLabels ? edge.label : undefined,
+        relationType: edge.label ? getRelationType(edge.label) : null,
+        description: edge.description,
+        properties: edge.properties,
+        operations: edge.operations,
+        hovered: edge.id === hoveredEdgeId.value,
+        dimmedByFilter: edgeDimmedByFilter,
+      },
+    }
+  })
+
+  // For SHORTEST_PATH mode: hasSelection = anchor node set AND hovering
+  const shortestPathActive = isShortestPathMode && !!settingsStore.shortestPathAnchorNode && !!hoveredNode.value
+  const hasSelection = (!isNormalMode && !isShortestPathMode && !!hoveredNode.value) || shortestPathActive
+
+  // Apply highlight logic then merge with filter-based dimming
+  const highlightedEdges = applyEdgeHighlights(
     edgesWithData,
     highlights.value.highlightedEdgeIds,
-    !isNormalMode && !!hoveredNode.value,
+    hasSelection,
   )
+
+  // Apply the node type filter dimming
+  return highlightedEdges.map((edge) => {
+    const dimmedByFilter = edge.data?.dimmedByFilter ?? false
+    return {
+      ...edge,
+      data: {
+        ...edge.data,
+        dimmed: edge.data?.dimmed || dimmedByFilter,
+      },
+    }
+  })
 })
+
+// Edge mouse event handlers for hover glow effect
+function onEdgeMouseEnter(event: { edge: Edge }) {
+  // Only set hovered state if edge has metadata
+  const data = event.edge.data
+  const hasMetadata = (data?.description !== null && data?.description !== undefined && data?.description !== '')
+    || (data?.properties && Object.keys(data.properties).length > 0)
+    || (data?.operations && Object.keys(data.operations).length > 0)
+  if (hasMetadata) {
+    hoveredEdgeId.value = event.edge.id
+  }
+}
+
+function onEdgeMouseLeave() {
+  hoveredEdgeId.value = null
+}
 
 function closeInfoPanel() {
   selectedNode.value = null
+  selectedEdge.value = null
 }
 </script>
 
 <template>
-  <div class="flex h-full w-full relative overflow-hidden">
+  <div v-if="model" class="flex h-full w-full relative overflow-hidden">
     <!-- Settings Dropdown -->
     <GraphSettings :component-types="model.component_types" @close="emit('close')" />
 
     <div class="grow h-full relative">
-      <EdgeLegend class="bottom-3 left-3 absolute z-[999999]" />
+      <EdgeLegend class="bottom-3 left-3 absolute z-1" />
       <VueFlow
         :key="`${settingsStore.hostedOnRelationDisplay}-${settingsStore.config.layoutDirection}`"
         :nodes="displayNodes"
@@ -202,16 +373,21 @@ function closeInfoPanel() {
         :min-zoom="0.3"
         :max-zoom="2.5"
         :zoom-on-double-click="false"
+        @edge-mouse-enter="onEdgeMouseEnter"
+        @edge-mouse-leave="onEdgeMouseLeave"
       >
         <Background />
       </VueFlow>
     </div>
 
-    <!-- Node Info Panel -->
-    <NodeInfoPanel
+    <!-- Element Info Panel (nodes and edges) -->
+    <ElementInfoPanel
       :node="selectedNode"
       :component="selectedComponent"
-      :component-types="model.component_types"
+      :component-types="model.component_types ?? {}"
+      :edge="selectedEdge"
+      :relation="selectedRelation"
+      :relation-types="model.relation_types ?? {}"
       @close="closeInfoPanel"
     />
   </div>
@@ -304,5 +480,17 @@ function closeInfoPanel() {
   box-shadow:
     0 4px 20px rgba(0, 0, 0, 0.25),
     0 0 0 2px var(--node-ring);
+}
+
+/* Type-based coloring - applies border color from parent type */
+.vue-flow__node.edmm-node.edmm-node--type-colored {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--type-color) 20%, white),
+    color-mix(in oklch, var(--type-color) 50%, white)
+  ) !important;
+  border-color: var(--type-color) !important;
+  --node-foreground: black !important;
+  --node-background: white !important;
 }
 </style>

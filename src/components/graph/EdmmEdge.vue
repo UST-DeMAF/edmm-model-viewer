@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@vue-flow/core'
 import { computed } from 'vue'
-import { RelationType } from '~/lib/graph-layout'
+import { useGraphStore } from '~/stores/graph'
 import EdmmMarker from './EdmmMarker.vue'
 
 const props = defineProps<{
@@ -16,13 +16,19 @@ const props = defineProps<{
   targetPosition: string
   data?: {
     label?: string
-    relationType?: RelationType | null
+    relationType?: string | null
     highlighted?: boolean
     dimmed?: boolean
+    description?: string | null
+    properties?: Record<string, unknown>
+    operations?: Record<string, unknown>
+    hovered?: boolean
   }
   markerEnd?: string
   style?: Record<string, any>
 }>()
+
+const graphStore = useGraphStore()
 
 const path = computed(() => {
   const [edgePath, labelX, labelY] = getBezierPath({
@@ -37,26 +43,27 @@ const path = computed(() => {
   return { edgePath, labelX, labelY }
 })
 
+// Check if edge has metadata that makes it hoverable
+const hasMetadata = computed(() => {
+  const desc = props.data?.description
+  const propsCount = props.data?.properties ? Object.keys(props.data.properties).length : 0
+  const opsCount = props.data?.operations ? Object.keys(props.data.operations).length : 0
+  return (desc !== null && desc !== undefined && desc !== '') || propsCount > 0 || opsCount > 0
+})
+
 const edgeClasses = computed(() => ({
   'edmm-edge': true,
   'edmm-edge--highlighted': props.data?.highlighted,
   'edmm-edge--dimmed': props.data?.dimmed,
+  'edmm-edge--hoverable': hasMetadata.value,
 }))
 
-// Map relation types to CSS variable names
-const relationTypeColors: Record<RelationType, string> = {
-  [RelationType.HostedOn]: 'var(--chart-1)',
-  [RelationType.ConnectsTo]: 'var(--chart-2)',
-  [RelationType.AttachesTo]: 'var(--chart-3)',
-  [RelationType.DependsOn]: 'var(--chart-4)',
-}
-
-// Edge color based on relation type and state
+// Edge color based on relation type and state, using colors from store
 const edgeColor = computed(() => {
   if (props.data?.dimmed)
     return 'var(--muted-foreground)'
   if (props.data?.relationType) {
-    return relationTypeColors[props.data.relationType]
+    return graphStore.getRelationColor(props.data.relationType)
   }
   return 'var(--ring)'
 })
@@ -65,13 +72,20 @@ const edgeColor = computed(() => {
 const markerId = computed(() => `marker-${props.id}`)
 
 const edgeStyle = computed(() => {
-  const baseStyle = {
-    strokeWidth: props.data?.highlighted ? 3 : 2,
+  const isHovered = props.data?.hovered && hasMetadata.value
+  const baseStyle: Record<string, any> = {
+    strokeWidth: props.data?.highlighted ? 3 : (isHovered ? 3 : 2),
     stroke: edgeColor.value,
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
     opacity: props.data?.dimmed ? 0.3 : 1,
-    pointerEvents: 'none', // Allow clicks to pass through to nodes/pane
+    // Enable pointer events for hoverable edges
+    pointerEvents: hasMetadata.value ? 'auto' : 'none',
+    cursor: hasMetadata.value ? 'pointer' : 'default',
     ...props.style,
+  }
+  // Apply glow filter when hovered
+  if (isHovered) {
+    baseStyle.filter = `drop-shadow(0 0 6px color-mix(in oklch, ${edgeColor.value} 20%, transparent)) drop-shadow(0 0 12px color-mix(in oklch, ${edgeColor.value} 20%, transparent))`
   }
   return baseStyle
 })
@@ -86,6 +100,16 @@ const labelClasses = computed(() => ({
 <template>
   <!-- Custom marker for this edge -->
   <EdmmMarker :id="markerId" :color="edgeColor" />
+
+  <!-- Invisible hover path with larger stroke for easier interaction -->
+  <path
+    v-if="hasMetadata"
+    :d="path.edgePath"
+    class="edmm-edge__hover-zone"
+    fill="none"
+    stroke="transparent"
+    :stroke-width="20"
+  />
 
   <!-- Base edge -->
   <BaseEdge
@@ -165,5 +189,11 @@ const labelClasses = computed(() => ({
   to {
     stroke-dashoffset: -18;
   }
+}
+
+/* Invisible hover zone for easier edge interaction */
+.edmm-edge__hover-zone {
+  cursor: pointer;
+  pointer-events: auto;
 }
 </style>
