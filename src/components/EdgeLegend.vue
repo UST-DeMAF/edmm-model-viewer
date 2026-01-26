@@ -193,13 +193,6 @@ function hasNextSiblingAtLevel(flattenItems: { level: number }[], index: number)
           class="pr-3 rounded-lg flex gap-2 h-8 cursor-pointer items-center relative hover:bg-foreground/5"
           @click.stop="toggleEdgeType(item.value.name)"
         >
-          <div v-if="item.level > 1" class="h-full top-0 absolute" :style="{ left: getIndentation(item.level - 1), width: getIndentation(item.level, 0.6) }">
-            <div class="size-full relative overflow-hidden">
-              <div class="border rounded-md size-full bottom-[50%] left-[50%] absolute" />
-              <div v-if="hasNextSiblingAtLevel(flattenItems, index)" class="border-s h-full w-full left-[50%] absolute" />
-            </div>
-          </div>
-
           <div class="flex gap-2 items-center" :class="{ 'opacity-40': !isEdgeTypeVisible(item.value.name) }">
             <!-- Color indicator -->
             <div

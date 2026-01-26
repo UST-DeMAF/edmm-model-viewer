@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import type { Edge, Node } from '@vue-flow/core'
 import type { ComponentAssignment } from '~/lib/io'
+import { Button } from '@/components/ui/button'
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu'
 import { Background } from '@vue-flow/background'
 import { useVueFlow, VueFlow } from '@vue-flow/core'
+import { EyeIcon, EyeOffIcon } from 'lucide-vue-next'
 import { useHoveredNode } from '~/composables/useHoveredNode'
 import {
   applyEdgeHighlights,
@@ -11,7 +20,7 @@ import {
   computeShortestPathHighlights,
   computeShortestPaths,
 } from '~/lib/graph-highlighting'
-import { computeGraphLayout, getRelationType } from '~/lib/graph-layout'
+import { computeGraphLayout, isRelationVisible } from '~/lib/graph-layout'
 import { isTypeVisible } from '~/lib/type-hierarchy'
 import { useGraphStore } from '~/stores/graph'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
@@ -24,6 +33,8 @@ import GraphSettings from './GraphSettings.vue'
 const emit = defineEmits<{
   close: []
 }>()
+
+const vueFlow = ref<typeof VueFlow | null>(null)
 
 // Access the graph store for the model
 const graphStore = useGraphStore()
@@ -90,6 +101,27 @@ onPaneClick(() => {
   if (settingsStore.interactionMode === 'SHORTEST_PATH') {
     settingsStore.shortestPathAnchorNode = null
   }
+})
+
+// Context menu handler: Hide unselected nodes
+function hideUnselectedNodes() {
+  // Access the VueFlow instance methods via the ref
+  const selectedNodes = vueFlow.value?.getSelectedNodes
+  if (selectedNodes && selectedNodes.length > 0) {
+    const selectedIds = selectedNodes.map((n: Node) => n.id)
+    settingsStore.setVisibleNodeIds(selectedIds)
+  }
+}
+
+// Check if we have any selected nodes (to enable/disable context menu item)
+const hasSelectedNodes = computed(() => {
+  const selectedNodes = vueFlow.value?.getSelectedNodes
+  return selectedNodes && selectedNodes.length > 0
+})
+
+// Check if node filter is currently active
+const isNodeFilterActive = computed(() => {
+  return settingsStore.visibleNodeIds !== null && settingsStore.visibleNodeIds.length > 0
 })
 
 // Get the component data for the selected node
@@ -167,8 +199,16 @@ const displayNodes = computed<Node[]>(() => {
   const shortestPathActive = isShortestPathMode && !!settingsStore.shortestPathAnchorNode && !!hoveredNode.value
   const hasSelection = (!isNormalMode && !isShortestPathMode && !!hoveredNode.value) || shortestPathActive
 
+  // First, apply visible node IDs filter (from "Hide unselected nodes" feature)
+  const visibleNodeIdsFilter = settingsStore.visibleNodeIds
+  let filteredNodes = layoutedNodes.value
+  if (visibleNodeIdsFilter !== null && visibleNodeIdsFilter.length > 0) {
+    const visibleSet = new Set(visibleNodeIdsFilter)
+    filteredNodes = filteredNodes.filter(node => visibleSet.has(node.id))
+  }
+
   let nodes = applyNodeHighlights(
-    layoutedNodes.value,
+    filteredNodes,
     highlights.value.highlightedNodeIds,
     hasSelection,
   )
@@ -255,11 +295,28 @@ const displayNodes = computed<Node[]>(() => {
 // Apply highlighting to edges and add custom type
 // Filter by visibleRelations (display-only filtering, doesn't affect layout)
 const displayEdges = computed<Edge[]>(() => {
-  // First, filter edges by visible relation types
+  // Get visible node IDs for filtering edges
+  const visibleNodeIdsFilter = settingsStore.visibleNodeIds
+  const visibleNodeSet = visibleNodeIdsFilter !== null && visibleNodeIdsFilter.length > 0
+    ? new Set(visibleNodeIdsFilter)
+    : null
+
+  // First, filter edges by visible relation types AND visible nodes
   const filteredEdges = rawEdges.value.filter((edge) => {
-    const relationType = edge.label ? getRelationType(edge.label) : null
-    // Show edge if relation type is unknown or is in the visible list
-    return !relationType || settingsStore.config.visibleRelations.includes(relationType)
+    // Check if relation type is visible (uses dynamic string-based filtering)
+    const relationVisible = !edge.label || isRelationVisible(edge.label, settingsStore.config.visibleRelations)
+
+    // If we have a visible node filter, only show edges between visible nodes
+    if (visibleNodeSet !== null) {
+      const sourceVisible = visibleNodeSet.has(edge.source)
+      const targetVisible = visibleNodeSet.has(edge.target)
+      // Only show edge if BOTH source and target are visible
+      if (!sourceVisible || !targetVisible) {
+        return false
+      }
+    }
+
+    return relationVisible
   })
 
   // Check if node type filter is active (and no search/hover override)
@@ -299,7 +356,7 @@ const displayEdges = computed<Edge[]>(() => {
       type: 'edmm',
       data: {
         label: settingsStore.showEdgeLabels ? edge.label : undefined,
-        relationType: edge.label ? getRelationType(edge.label) : null,
+        relationType: edge.label ?? null,
         description: edge.description,
         properties: edge.properties,
         operations: edge.operations,
@@ -360,25 +417,67 @@ function closeInfoPanel() {
     <!-- Settings Dropdown -->
     <GraphSettings :component-types="model.component_types" @close="emit('close')" />
 
-    <div class="grow h-full relative">
-      <EdgeLegend class="bottom-3 left-3 absolute z-1" />
-      <VueFlow
-        :key="`${settingsStore.hostedOnRelationDisplay}-${settingsStore.config.layoutDirection}`"
-        :nodes="displayNodes"
-        :edges="displayEdges"
-        :nodes-draggable="false"
-        :nodes-connectable="false"
-        :node-types="nodeTypes"
-        :edge-types="edgeTypes"
-        :min-zoom="0.3"
-        :max-zoom="2.5"
-        :zoom-on-double-click="false"
-        @edge-mouse-enter="onEdgeMouseEnter"
-        @edge-mouse-leave="onEdgeMouseLeave"
-      >
-        <Background />
-      </VueFlow>
-    </div>
+    <ContextMenu>
+      <ContextMenuTrigger as-child>
+        <div class="grow h-full relative">
+          <EdgeLegend class="bottom-3 left-3 absolute z-1" />
+
+          <!-- Floating banner when viewing filtered nodes -->
+          <div
+            v-if="isNodeFilterActive"
+            class="py-2 pe-2 ps-3 border border-border rounded-lg bg-background/95 flex gap-3 shadow-lg translate-x-[-50%] items-center left-50% top-3 absolute z-10 backdrop-blur-sm"
+          >
+            <div class="text-sm text-muted-foreground flex gap-2 items-center">
+              <span>Showing <strong class="text-foreground">{{ settingsStore.visibleNodeIds?.length }}</strong> of <strong class="text-foreground">{{ layoutedNodes.length }}</strong> nodes</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              class="text-xs h-7"
+              @click="settingsStore.showAllNodes()"
+            >
+              <EyeIcon class="mr-1 h-3 w-3" />
+              Show all
+            </Button>
+          </div>
+
+          <VueFlow
+            ref="vueFlow"
+            :key="`${settingsStore.config.layoutAlgorithm}-${settingsStore.config.layoutDirection}`"
+            :nodes="displayNodes"
+            :edges="displayEdges"
+            :nodes-draggable="false"
+            :nodes-connectable="false"
+            :node-types="nodeTypes"
+            :edge-types="edgeTypes"
+            :min-zoom="0.3"
+            :max-zoom="2.5"
+            :zoom-on-double-click="false"
+            @edge-mouse-enter="onEdgeMouseEnter"
+            @edge-mouse-leave="onEdgeMouseLeave"
+          >
+            <Background />
+          </VueFlow>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent class="w-56">
+        <ContextMenuItem
+          :disabled="!hasSelectedNodes"
+          @click="hideUnselectedNodes"
+        >
+          <EyeOffIcon class="mr-2 h-4 w-4" />
+          Hide unselected nodes
+        </ContextMenuItem>
+        <ContextMenuSeparator v-if="isNodeFilterActive" />
+        <ContextMenuItem
+          v-if="isNodeFilterActive"
+          @click="settingsStore.showAllNodes()"
+        >
+          <EyeIcon class="mr-2 h-4 w-4" />
+          Show all nodes
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
 
     <!-- Element Info Panel (nodes and edges) -->
     <ElementInfoPanel
@@ -441,7 +540,7 @@ function closeInfoPanel() {
     0 4px 20px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(0, 0, 0, 0.05) !important;
   transition:
-    all 0.2s ease-out,
+    all 0.1s ease-out,
     transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   overflow: visible !important;
   padding: 0 10px !important;
@@ -463,8 +562,8 @@ function closeInfoPanel() {
 
 /* Selected node state */
 .vue-flow__node.edmm-node.selected {
-  border-color: oklch(0.597 0.2069 255.56 / 0.7);
-  box-shadow: 0 0 20px 0 oklch(0.597 0.2069 255.56 / 0.7);
+  border-color: oklch(0.597 0.2069 255.56 / 0.7) !important;
+  box-shadow: 0 0 0 5px var(--colors-foreground) !important;
 }
 
 /* Group node styles */

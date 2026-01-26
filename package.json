@@ -33,6 +33,7 @@
     "clsx": "catalog:",
     "cors": "catalog:",
     "dagre": "catalog:",
+    "elkjs": "catalog:",
     "express": "catalog:",
     "js-yaml": "catalog:",
     "lucide-vue-next": "catalog:",

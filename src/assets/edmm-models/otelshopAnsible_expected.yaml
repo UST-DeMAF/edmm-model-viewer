@@ -1054,7 +1054,7 @@ relations:
       properties: []
       operations: []
   - frontend_connectsTo_checkoutservice:
-      type: ConnectsTo
+      type: RelatesTo
       description: null
       source: frontend
       target: checkoutservice
@@ -1258,7 +1258,7 @@ relations:
       properties: []
       operations: []
   - shippingservice_connectsTo_otelcol:
-      type: ConnectsTo
+      type: Test
       description: null
       source: shippingservice
       target: otelcol
@@ -1482,7 +1482,7 @@ relations:
       properties: []
       operations: []
   - grafana_hostedOn_localhost:
-      type: HostedOn
+      type: DependsOn
       description: null
       source: grafana
       target: localhost
@@ -2381,6 +2381,16 @@ relation_types:
   - ConnectsTo:
       extends: DependsOn
       description: connects to relation
+      properties: []
+      operations: []
+  - RelatesTo:
+      extends: ConnectsTo
+      description: relates to relation
+      properties: []
+      operations: []
+  - Test:
+      extends: HostedOn
+      description: test relation
       properties: []
       operations: []
   - AttachesTo:

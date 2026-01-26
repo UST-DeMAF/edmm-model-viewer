@@ -19,6 +19,7 @@ const props = defineProps<{
     dependentCount?: number
   }
 }>()
+defineEmits(['updateNodeInternals'])
 const store = useGraphSettingsStore()
 const { layoutDirection } = storeToRefs(store)
 

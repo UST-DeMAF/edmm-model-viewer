@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@vue-flow/core'
-import type { LayoutConfig, RelationType } from '~/lib/graph-layout'
+import type { LayoutConfig } from '~/lib/graph-layout'
 import type { EdmmDeploymentModel } from '~/lib/io'
-import { getRelationType } from '~/lib/graph-layout'
+import { isRelationVisible } from '~/lib/graph-layout'
 
 export type InteractionMode = LayoutConfig['interactionMode']
 
@@ -18,7 +18,7 @@ interface HighlightResult {
  */
 export function buildDependencyGraph(
   model: EdmmDeploymentModel,
-  visibleRelations: RelationType[],
+  visibleRelations: string[],
 ): {
     dependencies: Map<string, Set<string>>
     dependents: Map<string, Set<string>>
@@ -37,8 +37,7 @@ export function buildDependencyGraph(
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Only consider visible relation types
-      const relationType = getRelationType(relation.type)
-      if (relationType && !visibleRelations.includes(relationType)) {
+      if (!isRelationVisible(relation.type, visibleRelations)) {
         return
       }
 
@@ -70,7 +69,7 @@ export function buildDependencyGraph(
  */
 export function computeDependentCounts(
   model: EdmmDeploymentModel,
-  visibleRelations: RelationType[],
+  visibleRelations: string[],
 ): Map<string, number> {
   const { dependents } = buildDependencyGraph(model, visibleRelations)
   const counts = new Map<string, number>()
@@ -121,7 +120,7 @@ export function computeHighlights(
   model: EdmmDeploymentModel,
   selectedNodeId: string | null,
   interactionMode: InteractionMode,
-  visibleRelations: RelationType[],
+  visibleRelations: string[],
 ): HighlightResult {
   const highlightedNodeIds = new Set<string>()
   const highlightedEdgeIds = new Set<string>()
@@ -241,7 +240,7 @@ export function applyEdgeHighlights(
 export function computeShortestPaths(
   model: EdmmDeploymentModel,
   anchorNodeId: string,
-  visibleRelations: RelationType[],
+  visibleRelations: string[],
 ): Map<string, { path: string[], edges: string[] }> {
   const result = new Map<string, { path: string[], edges: string[] }>()
 
@@ -256,8 +255,7 @@ export function computeShortestPaths(
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Only consider visible relation types
-      const relationType = getRelationType(relation.type)
-      if (relationType && !visibleRelations.includes(relationType)) {
+      if (!isRelationVisible(relation.type, visibleRelations)) {
         return
       }
 

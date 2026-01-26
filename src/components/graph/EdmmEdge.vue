@@ -72,6 +72,9 @@ const edgeColor = computed(() => {
 const markerId = computed(() => `marker-${props.id}`)
 
 const edgeStyle = computed(() => {
+  if (props.data?.properties.length > 0) {
+    console.log('RelatesTo')
+  }
   const isHovered = props.data?.hovered && hasMetadata.value
   const baseStyle: Record<string, any> = {
     strokeWidth: props.data?.highlighted ? 3 : (isHovered ? 3 : 2),

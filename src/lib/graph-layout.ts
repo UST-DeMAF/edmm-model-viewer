@@ -1,52 +1,22 @@
 import type { Node } from '@vue-flow/core'
 import type { EdmmDeploymentModel } from './io'
 import dagre from '@dagrejs/dagre'
-import ELK from 'elkjs/lib/elk.bundled.js'
+import ELK from 'elkjs'
 import { computeDependentCounts } from './graph-highlighting'
 
 // Node dimensions
 export const NODE_WIDTH = 180
 export const NODE_HEIGHT = 60
 
-// Relation types in EDMM models
-export enum RelationType {
-  HostedOn = 'HostedOn',
-  ConnectsTo = 'ConnectsTo',
-  AttachesTo = 'AttachesTo',
-  DependsOn = 'DependsOn',
-}
-
-// All relation types for convenience
-export const ALL_RELATION_TYPES: RelationType[] = Object.values(RelationType)
-
-/**
- * Get the relation type from a relation type string
- */
-export function getRelationType(typeString: string): RelationType | null {
-  const lowerType = typeString.toLowerCase()
-  if (lowerType.includes('hostedon'))
-    return RelationType.HostedOn
-  if (lowerType.includes('connectsto'))
-    return RelationType.ConnectsTo
-  if (lowerType.includes('attachesto'))
-    return RelationType.AttachesTo
-  if (lowerType.includes('dependson'))
-    return RelationType.DependsOn
-  return null
-}
-
-export type HostedOnRelationDisplay = 'HIDE' | 'GROUP' | 'SHOW'
-
 export type LayoutDirection = 'vertical' | 'horizontal'
 
 export type LayoutAlgorithm = 'default' | 'layered' | 'force' | 'mrtree'
 
 export interface LayoutConfig {
-  hostedOnRelationDisplay: HostedOnRelationDisplay
   interactionMode: 'NORMAL' | 'HIGHLIGHT_DIRECT_SUCCESSORS' | 'HIGHLIGHT_DIRECT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS' | 'SHORTEST_PATH'
   showEdgeLabels: boolean
-  /** Which relation types to display and use for layout */
-  visibleRelations: RelationType[]
+  /** Which relation types to display (by type name string) */
+  visibleRelations: string[]
   /** Direction of the graph layout */
   layoutDirection: LayoutDirection
   /** Whether to scale nodes based on their dependency count */
@@ -74,33 +44,16 @@ export interface LayoutResult {
 }
 
 /**
- * Build a map of component -> host (what it's hosted on)
+ * Check if a relation type is visible based on the visible relations list.
+ * If visibleRelations is empty, all relations are visible.
+ * Otherwise, checks if the relation type is in the list.
  */
-export function buildHostedOnMap(model: EdmmDeploymentModel): Record<string, string> {
-  const map: Record<string, string> = {}
-  if (model.relations) {
-    Object.values(model.relations).forEach((relation) => {
-      if (relation.type.toLowerCase().includes('hostedon')) {
-        // source is hosted on target
-        map[relation.source] = relation.target
-      }
-    })
+export function isRelationVisible(relationType: string, visibleRelations: string[]): boolean {
+  // If no filter is set (empty array), show all relations
+  if (visibleRelations.length === 0) {
+    return true
   }
-  return map
-}
-
-/**
- * Build a map of host -> children (components hosted on it)
- */
-export function buildHostChildrenMap(hostedOnMap: Record<string, string>): Record<string, string[]> {
-  const map: Record<string, string[]> = {}
-  Object.entries(hostedOnMap).forEach(([child, host]) => {
-    if (!map[host]) {
-      map[host] = []
-    }
-    map[host].push(child)
-  })
-  return map
+  return visibleRelations.includes(relationType)
 }
 
 /**
@@ -114,11 +67,8 @@ export function computeEdges(
 
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
-      const relationType = getRelationType(relation.type)
-      const isHostedOn = relationType === RelationType.HostedOn
-
-      // Skip hosted_on relations if hiding or grouping
-      if ((config.hostedOnRelationDisplay === 'HIDE' || config.hostedOnRelationDisplay === 'GROUP') && isHostedOn) {
+      // Skip if relation type is not in visible relations list
+      if (!isRelationVisible(relation.type, config.visibleRelations)) {
         return
       }
 
@@ -138,7 +88,7 @@ export function computeEdges(
 }
 
 /**
- * Run dagre layout for flat graph (HIDE/SHOW modes)
+ * Run dagre layout for flat graph
  */
 function runFlatDagreLayout(
   model: EdmmDeploymentModel,
@@ -177,19 +127,12 @@ function runFlatDagreLayout(
   // Add edges (only enabled relation types)
   if (model.relations) {
     Object.values(model.relations).forEach((relation) => {
-      const relationType = getRelationType(relation.type)
-
       // Skip if relation type is not in visible relations list
-      if (relationType && !config.visibleRelations.includes(relationType)) {
+      if (!isRelationVisible(relation.type, config.visibleRelations)) {
         return
       }
 
-      const isHostedOn = relationType === RelationType.HostedOn
-
-      // Include edge based on mode
-      if (config.hostedOnRelationDisplay === 'SHOW' || !isHostedOn) {
-        dagreGraph.setEdge(relation.source, relation.target)
-      }
+      dagreGraph.setEdge(relation.source, relation.target)
     })
   }
 
@@ -235,146 +178,6 @@ function runFlatDagreLayout(
 }
 
 /**
- * Run dagre layout for hierarchical graph (GROUP mode)
- * Note: dagre doesn't support true hierarchy, so we simulate it by:
- * 1. First layouting children within each parent
- * 2. Then layouting the roots with their computed sizes
- */
-function runHierarchicalDagreLayout(
-  model: EdmmDeploymentModel,
-  componentIds: string[],
-  hostedComponents: Set<string>,
-  hostChildrenMap: Record<string, string[]>,
-  config: LayoutConfig,
-): Node[] {
-  const nodes: Node[] = []
-  const PADDING_TOP = NODE_HEIGHT + 30
-  const PADDING_SIDE = 20
-  const CHILD_SPACING = 20
-
-  // Find root-level nodes (not hosted by anything)
-  const rootNodeIds = componentIds.filter(id => !hostedComponents.has(id))
-
-  // Calculate dimensions for a node including its children
-  function calculateNodeDimensions(nodeId: string): { width: number, height: number } {
-    const children = hostChildrenMap[nodeId] || []
-    if (children.length === 0) {
-      return { width: NODE_WIDTH, height: NODE_HEIGHT }
-    }
-
-    // Layout children in a simple horizontal arrangement
-    const childDimensions = children.map(childId => calculateNodeDimensions(childId))
-    const totalChildWidth = childDimensions.reduce((sum, dim) => sum + dim.width, 0)
-      + (children.length - 1) * CHILD_SPACING
-    const maxChildHeight = Math.max(...childDimensions.map(dim => dim.height))
-
-    return {
-      width: Math.max(NODE_WIDTH, totalChildWidth + 2 * PADDING_SIDE),
-      height: PADDING_TOP + maxChildHeight + PADDING_SIDE,
-    }
-  }
-
-  // Recursively create nodes with proper positioning
-  function createNodesRecursively(
-    nodeId: string,
-    parentId: string | null,
-    offsetX: number,
-    offsetY: number,
-  ): void {
-    const children = hostChildrenMap[nodeId] || []
-    const component = model.components[nodeId]
-    const hasChildren = children.length > 0
-    const dimensions = calculateNodeDimensions(nodeId)
-
-    const node: Node = {
-      id: nodeId,
-      type: 'default',
-      position: { x: offsetX, y: offsetY },
-      data: {
-        label: nodeId,
-        type: component?.type ?? 'unknown',
-        isGroupNode: hasChildren,
-        ...(hasChildren && {
-          width: dimensions.width,
-          height: dimensions.height,
-        }),
-      },
-      ...(parentId && { parentNode: parentId }),
-      ...(hasChildren && { draggable: false, selectable: false }),
-      style: {
-        width: `${dimensions.width}px`,
-        height: `${dimensions.height}px`,
-      },
-    }
-
-    nodes.push(node)
-
-    // Position children
-    if (hasChildren) {
-      let childX = PADDING_SIDE
-      children.forEach((childId) => {
-        const childDim = calculateNodeDimensions(childId)
-        createNodesRecursively(childId, nodeId, childX, PADDING_TOP)
-        childX += childDim.width + CHILD_SPACING
-      })
-    }
-  }
-
-  // Use dagre (Sugiyama/layered algorithm) to layout root nodes
-  const dagreGraph = new dagre.graphlib.Graph()
-  dagreGraph.setDefaultEdgeLabel(() => ({}))
-  dagreGraph.setGraph({
-    rankdir: config.layoutDirection === 'vertical' ? 'TB' : 'LR',
-    ranker: 'network-simplex',
-    acyclicer: 'greedy',
-    nodesep: 80,
-    ranksep: 100,
-    marginx: 20,
-    marginy: 20,
-  })
-
-  // Add root nodes with their computed dimensions
-  rootNodeIds.forEach((id) => {
-    const dim = calculateNodeDimensions(id)
-    dagreGraph.setNode(id, { width: dim.width, height: dim.height })
-  })
-
-  // Add non-hostedOn edges (only enabled relation types)
-  if (model.relations) {
-    Object.values(model.relations).forEach((relation) => {
-      const relationType = getRelationType(relation.type)
-
-      // Skip if relation type is not in visible relations list
-      if (relationType && !config.visibleRelations.includes(relationType)) {
-        return
-      }
-
-      const isHostedOn = relationType === RelationType.HostedOn
-      if (!isHostedOn) {
-        dagreGraph.setEdge(relation.source, relation.target)
-      }
-    })
-  }
-
-  // Run layout on roots
-  dagre.layout(dagreGraph)
-
-  // Create nodes starting from roots
-  rootNodeIds.forEach((id) => {
-    const nodeWithPosition = dagreGraph.node(id)
-    const dim = calculateNodeDimensions(id)
-    createNodesRecursively(
-      id,
-      null,
-      nodeWithPosition.x - dim.width / 2,
-      nodeWithPosition.y - dim.height / 2,
-    )
-  })
-
-  return nodes
-}
-
-/**
  * Compute scale factors for nodes based on their dependent counts
  */
 function computeNodeScales(
@@ -407,17 +210,8 @@ export function runDagreLayout(
   config: LayoutConfig,
 ): Node[] {
   const componentIds = Object.keys(model.components)
-  const hostedOnMap = buildHostedOnMap(model)
-  const hostedComponents = new Set(Object.keys(hostedOnMap))
-  const hostChildrenMap = buildHostChildrenMap(hostedOnMap)
   const nodeScales = computeNodeScales(model, config)
-
-  if (config.hostedOnRelationDisplay === 'GROUP') {
-    return runHierarchicalDagreLayout(model, componentIds, hostedComponents, hostChildrenMap, config)
-  }
-  else {
-    return runFlatDagreLayout(model, componentIds, config, nodeScales)
-  }
+  return runFlatDagreLayout(model, componentIds, config, nodeScales)
 }
 
 /**
@@ -443,23 +237,16 @@ async function runElkLayout(
   const edges: Array<{ id: string, sources: string[], targets: string[] }> = []
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
-      const relationType = getRelationType(relation.type)
-
       // Skip if relation type is not in visible relations list
-      if (relationType && !config.visibleRelations.includes(relationType)) {
+      if (!isRelationVisible(relation.type, config.visibleRelations)) {
         return
       }
 
-      const isHostedOn = relationType === RelationType.HostedOn
-
-      // Include edge based on mode (same logic as dagre)
-      if (config.hostedOnRelationDisplay === 'SHOW' || !isHostedOn) {
-        edges.push({
-          id: relationId,
-          sources: [relation.source],
-          targets: [relation.target],
-        })
-      }
+      edges.push({
+        id: relationId,
+        sources: [relation.source],
+        targets: [relation.target],
+      })
     })
   }
 
@@ -555,7 +342,7 @@ export async function computeGraphLayout(
   let nodes: Node[]
 
   if (config.layoutAlgorithm !== 'default') {
-    // Use ELK for layered, force, and mrtree algorithms (does not support GROUP mode)
+    // Use ELK for layered, force, and mrtree algorithms
     const nodeScales = computeNodeScales(model, config)
     nodes = await runElkLayout(model, config, nodeScales)
   }

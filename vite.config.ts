@@ -23,6 +23,7 @@ export default defineConfig({
     alias: {
       '~/': `${path.resolve(__dirname, 'src')}/`,
       '@/': `${path.resolve(__dirname, 'src')}/`,
+      'web-worker': path.resolve(__dirname, 'src/mocks/web-worker.ts'),
     },
   },
 
