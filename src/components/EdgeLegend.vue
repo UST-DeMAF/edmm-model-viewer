@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { TreeItem, TreeRoot } from 'reka-ui'
+import { Switch } from '~/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
 import { useGraphStore } from '~/stores/graph'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
@@ -62,10 +63,12 @@ function getIndentation(level: number, extra: number = 0): string {
 
             <div class="grow" />
 
-            <!-- Visibility icon -->
-            <i
-              class="text-muted-foreground ml-auto size-3.5"
-              :class="isEdgeTypeVisible(item.value.name) ? 'i-lucide-eye' : 'i-lucide-eye-off'"
+            <!-- Visibility switch -->
+            <Switch
+              class="opacity-70 scale-90"
+              :model-value="isEdgeTypeVisible(item.value.name)"
+              @click.stop
+              @update:model-value="toggleEdgeType(item.value.name)"
             />
           </div>
         </TreeItem>

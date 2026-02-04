@@ -4,6 +4,7 @@ import { useGraphStore } from '~/stores/graph'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
+import Kbd from './ui/kbd/Kbd.vue'
 
 const emit = defineEmits<{
   close: []
@@ -180,8 +181,8 @@ onMounted(async () => {
         </Button>
       </div> -->
 
-      <Button variant="ghost" size="icon" class="shrink-0" @click="handleClose">
-        <i class="i-lucide-x size-4" />
+      <Button class="shrink-0 px-2" @click="handleClose">
+        Close <Kbd class="text-foreground">ESC</Kbd>
       </Button>
     </div>
   </div>

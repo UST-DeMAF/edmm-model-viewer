@@ -29,6 +29,7 @@ import ElementInfoPanel from './ElementInfoPanel.vue'
 import EdmmEdge from './graph/EdmmEdge.vue'
 import EdmmNode from './graph/EdmmNode.vue'
 import GraphSettings from './GraphSettings.vue'
+import InteractionModeHelper from './InteractionModeHelper.vue'
 import NodeLegend from './NodeLegend.vue'
 
 const emit = defineEmits<{
@@ -70,10 +71,12 @@ const settingsStore = useGraphSettingsStore()
 const { onNodeClick, onEdgeClick, onPaneClick } = useVueFlow()
 
 onNodeClick(({ node }) => {
-  // In SHORTEST_PATH mode, clicking sets the anchor node instead of selecting
+  // In SHORTEST_PATH mode, clicking sets the anchor node AND opens the info panel
   if (settingsStore.interactionMode === 'SHORTEST_PATH') {
     if (!node.data?.isGroupNode) {
       settingsStore.shortestPathAnchorNode = node.id
+      selectedNode.value = node
+      selectedEdge.value = null
     }
   }
   else {
@@ -252,7 +255,10 @@ const displayNodes = computed<Node[]>(() => {
   }
 
   // Apply search-based filtering when search is active and has a query
-  if (query) {
+  // BUT: Interaction mode highlighting (successor, predecessor, neighbour, shortest path)
+  // should OVERWRITE search highlighting when actively hovering
+  const isInteractionHighlightingActive = hasSelection
+  if (query && !isInteractionHighlightingActive) {
     nodes = nodes.map((node) => {
       const nodeId = node.id.toLowerCase()
       const matches = nodeId.includes(query)
@@ -266,6 +272,17 @@ const displayNodes = computed<Node[]>(() => {
         },
       }
     })
+  }
+  else if (query) {
+    // Still pass the searchQuery so the node can show highlighting text,
+    // but don't apply dimming based on search (interaction mode takes precedence)
+    nodes = nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        searchQuery: query,
+      },
+    }))
   }
 
   // Build class string for each node based on state
@@ -442,26 +459,7 @@ function closeInfoPanel() {
     <ContextMenu>
       <ContextMenuTrigger as-child>
         <div class="grow h-full relative">
-          <div v-if="settingsStore.interactionMode === 'SHORTEST_PATH'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
-            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
-              Click on a node to select it, then hover over another node to show the shortest path between them
-            </div>
-          </div>
-          <div v-if="settingsStore.interactionMode === 'HIGHLIGHT_DIRECT_PREDECESSORS'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
-            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
-              Hover over a node to highlight its direct predecessors
-            </div>
-          </div>
-          <div v-if="settingsStore.interactionMode === 'HIGHLIGHT_DIRECT_SUCCESSORS'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
-            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
-              Hover over a node to highlight its direct successors
-            </div>
-          </div>
-          <div v-if="settingsStore.interactionMode === 'HIGHLIGHT_NEIGHBOURS'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
-            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
-              Hover over a node to highlight its direct neighbours
-            </div>
-          </div>
+          <InteractionModeHelper />
           <div class="flex flex-col bottom-3 left-3 absolute z-1">
             <NodeLegend class="rounded-b-0" />
             <EdgeLegend class="rounded-t-0" />

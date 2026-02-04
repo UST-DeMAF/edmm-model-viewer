@@ -3,6 +3,7 @@ import type { ComponentTypeDefinition } from '~/lib/type-hierarchy'
 import { onKeyStroke } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { isDark, toggleDark } from '~/composables/dark'
+import { useInteractionModeKeybinds } from '~/composables/useInteractionModeKeybinds'
 import { useGraphStore } from '~/stores/graph'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
 import GraphSearch from './GraphSearch.vue'
@@ -31,6 +32,9 @@ const emit = defineEmits<{
 
 const store = useGraphSettingsStore()
 const graphStore = useGraphStore()
+
+// Register interaction mode keyboard shortcuts
+useInteractionModeKeybinds()
 
 const { layoutDirection, layoutAlgorithm, interactionMode, visibleNodeTypes, isSearchOpen, scaleWithDependencies, typeDifferentiationMode, isSidebarExpanded: isExpanded } = storeToRefs(store)
 
@@ -174,7 +178,11 @@ onKeyStroke('Alt', (e) => {
         <TooltipTrigger as-child>
           <Button variant="ghost" class="p-2 w-full justify-start gap-2" @click="openSearch">
             <i class="i-lucide-search size-5 shrink-0" />
-            <span v-if="isExpanded" class="truncate">Search</span>
+            <template v-if="isExpanded">
+              <span class="truncate">Search</span>
+              <div class="grow" />
+              <Kbd>Ctrl + F</Kbd>
+            </template>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right" class="flex gap-2 items-center">
@@ -195,45 +203,74 @@ onKeyStroke('Alt', (e) => {
             @click="interactionMode = 'NORMAL'"
           >
             <i class="i-lucide-mouse-pointer-2 size-5 shrink-0" />
-            <span v-if="isExpanded" class="truncate">Normal</span>
+            <template v-if="isExpanded">
+              <span class="truncate">Normal</span>
+              <div class="grow" />
+              <Kbd>N</Kbd>
+            </template>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
           Normal Mode
         </TooltipContent>
       </Tooltip>
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <div class="w-full">
-            <Tooltip :open="showTooltips && !isExpanded">
-              <TooltipTrigger as-child>
-                <Button :variant="interactionMode !== 'NORMAL' && interactionMode !== 'SHORTEST_PATH' ? 'default' : 'ghost'" class="p-2 w-full justify-start gap-2">
-                  <i class="i-mingcute-finger-tap-line size-5 shrink-0" />
-                  <span v-if="isExpanded" class="truncate">Highlight</span>
-                  <i v-if="isExpanded" class="i-lucide-chevron-right size-4 shrink-0 ml-auto opacity-60" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                Highlight on Hover
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="right">
-          <DropdownMenuLabel>Highlight on Hover</DropdownMenuLabel>
-          <DropdownMenuRadioGroup v-model="interactionMode">
-            <DropdownMenuRadioItem value="HIGHLIGHT_DIRECT_SUCCESSORS" @select.prevent>
-              Successors
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="HIGHLIGHT_DIRECT_PREDECESSORS" @select.prevent>
-              Predecessors
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="HIGHLIGHT_NEIGHBOURS" @select.prevent>
-              Neighbours
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Tooltip :open="showTooltips && !isExpanded">
+        <TooltipTrigger as-child>
+          <Button
+            :variant="interactionMode === 'HIGHLIGHT_DIRECT_SUCCESSORS' ? 'default' : 'ghost'"
+            class="p-2 w-full justify-start gap-2"
+            @click="interactionMode = 'HIGHLIGHT_DIRECT_SUCCESSORS'"
+          >
+            <i class="i-lucide-arrow-right-to-line size-5 shrink-0" />
+            <template v-if="isExpanded">
+              <span class="truncate">Successors</span>
+              <div class="grow" />
+              <Kbd>S</Kbd>
+            </template>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          Highlight Successors
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip :open="showTooltips && !isExpanded">
+        <TooltipTrigger as-child>
+          <Button
+            :variant="interactionMode === 'HIGHLIGHT_DIRECT_PREDECESSORS' ? 'default' : 'ghost'"
+            class="p-2 w-full justify-start gap-2"
+            @click="interactionMode = 'HIGHLIGHT_DIRECT_PREDECESSORS'"
+          >
+            <i class="i-lucide-arrow-left-to-line size-5 shrink-0" />
+            <template v-if="isExpanded">
+              <span class="truncate">Predecessors</span>
+              <div class="grow" />
+              <Kbd>P</Kbd>
+            </template>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          Highlight Predecessors
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip :open="showTooltips && !isExpanded">
+        <TooltipTrigger as-child>
+          <Button
+            :variant="interactionMode === 'HIGHLIGHT_NEIGHBOURS' ? 'default' : 'ghost'"
+            class="p-2 w-full justify-start gap-2"
+            @click="interactionMode = 'HIGHLIGHT_NEIGHBOURS'"
+          >
+            <i class="i-lucide-git-branch size-5 shrink-0" />
+            <template v-if="isExpanded">
+              <span class="truncate">Neighbours</span>
+              <div class="grow" />
+              <Kbd>B</Kbd>
+            </template>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          Highlight Neighbours
+        </TooltipContent>
+      </Tooltip>
       <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
           <Button
@@ -242,7 +279,11 @@ onKeyStroke('Alt', (e) => {
             @click="interactionMode = 'SHORTEST_PATH'"
           >
             <i class="i-lucide-route size-5 shrink-0" />
-            <span v-if="isExpanded" class="truncate">Shortest Path</span>
+            <template v-if="isExpanded">
+              <span class="truncate">Shortest Path</span>
+              <div class="grow" />
+              <Kbd>R</Kbd>
+            </template>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
