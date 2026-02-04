@@ -13,8 +13,8 @@ export type TypeDifferentiationMode = 'DISABLED' | 'COLOR' | 'SHAPE'
 interface GraphSettingsState {
   interactionMode: InteractionMode
   showEdgeLabels: boolean
-  /** Visible relation types by name (empty = show all) */
-  visibleRelations: string[]
+  /** Hidden relation types by name (empty = all visible) */
+  hiddenRelations: string[]
   layoutDirection: LayoutDirection
   layoutAlgorithm: LayoutAlgorithm
   visibleNodeTypes: string[]
@@ -22,19 +22,21 @@ interface GraphSettingsState {
   typeDifferentiationMode: TypeDifferentiationMode
   shortestPathAnchorNode: string | null
   visibleNodeIds: string[] | null // null = show all, array = filter to these IDs
+  isSidebarExpanded: boolean
 }
 
 const DEFAULT_STATE: GraphSettingsState = {
   interactionMode: 'NORMAL',
   showEdgeLabels: false,
-  visibleRelations: [], // Empty = show all relations (dynamic from model)
+  hiddenRelations: [], // Empty = all relations visible (none hidden)
   layoutDirection: 'horizontal',
   layoutAlgorithm: 'default',
   visibleNodeTypes: [], // Empty = show all types
   scaleWithDependencies: false,
-  typeDifferentiationMode: 'DISABLED',
+  typeDifferentiationMode: 'COLOR',
   shortestPathAnchorNode: null,
   visibleNodeIds: null, // null = show all, array = filter to these IDs
+  isSidebarExpanded: true, // Sidebar opened by default
 }
 
 export const useGraphSettingsStore = defineStore('graph-settings', () => {
@@ -56,9 +58,9 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     set: val => state.value.showEdgeLabels = val,
   })
 
-  const visibleRelations = computed({
-    get: () => state.value.visibleRelations,
-    set: val => state.value.visibleRelations = val,
+  const hiddenRelations = computed({
+    get: () => state.value.hiddenRelations,
+    set: val => state.value.hiddenRelations = val,
   })
 
   const layoutDirection = computed({
@@ -98,6 +100,12 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     set: val => state.value.visibleNodeIds = val,
   })
 
+  // Sidebar expanded state
+  const isSidebarExpanded = computed({
+    get: () => state.value.isSidebarExpanded,
+    set: val => state.value.isSidebarExpanded = val,
+  })
+
   // Helper to set visible node IDs (for "Hide unselected nodes" feature)
   function setVisibleNodeIds(nodeIds: string[] | null): void {
     state.value.visibleNodeIds = nodeIds
@@ -112,28 +120,27 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
   const config = computed<LayoutConfig>(() => ({
     interactionMode: interactionMode.value,
     showEdgeLabels: showEdgeLabels.value,
-    visibleRelations: visibleRelations.value,
+    hiddenRelations: hiddenRelations.value,
     layoutDirection: layoutDirection.value,
     layoutAlgorithm: layoutAlgorithm.value,
     scaleWithDependencies: scaleWithDependencies.value,
   }))
 
-  // Helper to check/toggle visible relation types (now uses strings)
-  function isVisibleRelationEnabled(type: string): boolean {
-    // If visibleRelations is empty, all relations are visible
-    if (state.value.visibleRelations.length === 0) {
-      return true
-    }
-    return state.value.visibleRelations.includes(type)
+  // Helper to check if a relation type is visible (not hidden)
+  function isRelationVisible(type: string): boolean {
+    // Relation is visible if it's NOT in the hidden list
+    return !state.value.hiddenRelations.includes(type)
   }
 
-  function toggleVisibleRelation(type: string): void {
-    const index = state.value.visibleRelations.indexOf(type)
+  function toggleRelationVisibility(type: string): void {
+    const index = state.value.hiddenRelations.indexOf(type)
     if (index === -1) {
-      state.value.visibleRelations = [...state.value.visibleRelations, type]
+      // Not hidden yet, add to hidden list
+      state.value.hiddenRelations = [...state.value.hiddenRelations, type]
     }
     else {
-      state.value.visibleRelations = state.value.visibleRelations.filter(t => t !== type)
+      // Already hidden, remove from hidden list (make visible)
+      state.value.hiddenRelations = state.value.hiddenRelations.filter(t => t !== type)
     }
   }
 
@@ -147,7 +154,7 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     // State
     interactionMode,
     showEdgeLabels,
-    visibleRelations,
+    hiddenRelations,
     layoutDirection,
     layoutAlgorithm,
     visibleNodeTypes,
@@ -155,13 +162,14 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     typeDifferentiationMode,
     shortestPathAnchorNode,
     visibleNodeIds,
+    isSidebarExpanded,
     searchQuery,
     isSearchOpen,
     // Computed
     config,
     // Actions
-    isVisibleRelationEnabled,
-    toggleVisibleRelation,
+    isRelationVisible,
+    toggleRelationVisibility,
     setVisibleNodeIds,
     showAllNodes,
     resetToDefaults,

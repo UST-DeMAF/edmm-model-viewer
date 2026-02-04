@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { NodeShape } from '~/stores/graph'
 import { Handle, Position } from '@vue-flow/core'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
@@ -17,6 +18,7 @@ const props = defineProps<{
     searchQuery?: string
     scale?: number
     dependentCount?: number
+    shape?: NodeShape
   }
 }>()
 defineEmits(['updateNodeInternals'])

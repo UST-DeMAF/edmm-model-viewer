@@ -16,6 +16,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import Layouts from 'vite-plugin-vue-layouts'
+import SvgLoader from 'vite-svg-loader'
 import 'vitest/config'
 
 export default defineConfig({
@@ -171,6 +172,8 @@ export default defineConfig({
 
     // https://github.com/webfansplz/vite-plugin-vue-devtools
     VueDevTools(),
+
+    SvgLoader(),
   ],
 
   // https://github.com/vitest-dev/vitest

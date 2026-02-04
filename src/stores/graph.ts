@@ -18,10 +18,34 @@ export interface RelationTypeInfo {
 }
 
 /**
+ * Represents a relation type in a hierarchical tree structure
+ */
+export interface RelationTreeItem {
+  name: string
+  label: string
+  color: string
+  description?: string | null
+  children?: RelationTreeItem[]
+}
+
+/**
+ * Available node shapes for type differentiation
+ */
+export type NodeShape = 'rectangle' | 'circle' | 'hexagon' | 'parallelogram'
+
+/**
+ * Array of available shapes for assignment (max 4 parent types supported)
+ */
+const AVAILABLE_SHAPES: NodeShape[] = ['rectangle', 'circle', 'hexagon', 'parallelogram']
+
+/**
  * Generate evenly-distributed HSL colors for maximum visual distinction
  * Uses golden ratio for optimal hue distribution
+ * @param count Number of colors to generate
+ * @param isDarkMode Whether dark mode is active (affects lightness)
+ * @param hueOffset Starting hue offset (default 0). Use half the golden angle (~68.75) to offset from another color set
  */
-function generateComplementaryColors(count: number, isDarkMode: boolean): string[] {
+function generateComplementaryColors(count: number, isDarkMode: boolean, hueOffset: number = 0): string[] {
   if (count === 0)
     return []
 
@@ -32,7 +56,7 @@ function generateComplementaryColors(count: number, isDarkMode: boolean): string
 
   // Use golden angle (137.5°) for optimal distribution
   const goldenAngle = 137.508
-  let hue = 220 // Start with a blue-ish hue
+  let hue = 220 + hueOffset // Start with a blue-ish hue, plus any offset
 
   for (let i = 0; i < count; i++) {
     colors.push(`hsl(${Math.round(hue % 360)}, ${saturation}%, ${lightness}%)`)
@@ -77,6 +101,76 @@ export const useGraphStore = defineStore('graph', () => {
   })
 
   /**
+   * Build a hierarchical tree structure from relation types based on their 'extends' property
+   */
+  const relationTypesHierarchy = computed<RelationTreeItem[]>(() => {
+    if (!model.value?.relation_types) {
+      return []
+    }
+
+    const relationTypesData = model.value.relation_types
+    const relationTypeNames = new Set(Object.keys(relationTypesData))
+
+    // Create a map of relation type name to its tree item
+    const itemMap = new Map<string, RelationTreeItem>()
+
+    // First pass: create all items
+    for (const rt of relationTypes.value) {
+      itemMap.set(rt.name, {
+        name: rt.name,
+        label: rt.label,
+        color: rt.color,
+        description: rt.description,
+        children: [],
+      })
+    }
+
+    // Second pass: build the tree structure
+    const roots: RelationTreeItem[] = []
+
+    for (const [name, relationType] of Object.entries(relationTypesData)) {
+      const item = itemMap.get(name)
+      if (!item)
+        continue
+
+      const parentName = relationType.extends
+
+      // If no parent or parent is not a known relation type, it's a root
+      if (!parentName || !relationTypeNames.has(parentName)) {
+        roots.push(item)
+      }
+      else {
+        // Find the parent and add this as a child
+        const parent = itemMap.get(parentName)
+        if (parent) {
+          parent.children = parent.children || []
+          parent.children.push(item)
+        }
+        else {
+          // Fallback: treat as root if parent not found
+          roots.push(item)
+        }
+      }
+    }
+
+    // Clean up empty children arrays
+    function cleanEmptyChildren(items: RelationTreeItem[]): RelationTreeItem[] {
+      return items.map((item) => {
+        if (item.children && item.children.length === 0) {
+          const { children: _, ...rest } = item
+          return rest as RelationTreeItem
+        }
+        if (item.children) {
+          return { ...item, children: cleanEmptyChildren(item.children) }
+        }
+        return item
+      })
+    }
+
+    return cleanEmptyChildren(roots)
+  })
+
+  /**
    * Map from relation type name to its color for quick lookup
    */
   const relationTypeColorMap = computed<Record<string, string>>(() => {
@@ -105,10 +199,10 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   /**
-   * Map from component type to its color based on direct parent type
-   * All types that share the same direct parent get the same color
+   * Map from parent type to its color
+   * Each unique parent type gets a distinct color
    */
-  const componentTypeColorMap = computed<Record<string, string>>(() => {
+  const parentTypeColorMap = computed<Record<string, string>>(() => {
     if (!model.value?.component_types) {
       return {}
     }
@@ -122,21 +216,37 @@ export const useGraphStore = defineStore('graph', () => {
       parentTypes.add(parentType)
     }
 
-    // Generate colors for parent types
+    // Generate colors for parent types with offset from edge colors
+    // Using half the golden angle (68.75°) ensures node colors fall between edge colors
     const sortedParentTypes = Array.from(parentTypes).sort()
-    const colors = generateComplementaryColors(sortedParentTypes.length, isDark.value)
+    const halfGoldenAngle = 137.508 / 2 // ~68.75° offset for maximum distance from edge colors
+    const colors = generateComplementaryColors(sortedParentTypes.length, isDark.value, halfGoldenAngle)
 
     // Create parent type -> color mapping
-    const parentColorMap: Record<string, string> = {}
+    const colorMap: Record<string, string> = {}
     sortedParentTypes.forEach((parentType, index) => {
-      parentColorMap[parentType] = colors[index]
+      colorMap[parentType] = colors[index]
     })
+
+    return colorMap
+  })
+
+  /**
+   * Map from component type to its color based on direct parent type
+   * All types that share the same direct parent get the same color
+   */
+  const componentTypeColorMap = computed<Record<string, string>>(() => {
+    if (!model.value?.component_types) {
+      return {}
+    }
+
+    const componentTypes = model.value.component_types
 
     // Map each component type to the color of its direct parent
     const colorMap: Record<string, string> = {}
     for (const typeName of Object.keys(componentTypes)) {
       const parentType = getDirectParentType(typeName, componentTypes)
-      colorMap[typeName] = parentColorMap[parentType]
+      colorMap[typeName] = parentTypeColorMap.value[parentType] ?? 'hsl(0, 0%, 50%)'
     }
 
     return colorMap
@@ -172,14 +282,90 @@ export const useGraphStore = defineStore('graph', () => {
     return relationTypeColorMap.value[typeName] ?? 'hsl(0, 0%, 50%)'
   }
 
+  /**
+   * Get all unique parent type categories from the model
+   */
+  const uniqueParentTypes = computed<string[]>(() => {
+    if (!model.value?.component_types)
+      return []
+
+    const parentTypes = new Set<string>()
+    for (const typeName of Object.keys(model.value.component_types)) {
+      const parentType = getDirectParentType(typeName, model.value.component_types)
+      parentTypes.add(parentType)
+    }
+    return Array.from(parentTypes).sort()
+  })
+
+  /**
+   * Check if SHAPE mode can be used (≤4 unique parent types)
+   */
+  const isShapeModeAvailable = computed<boolean>(() => {
+    return uniqueParentTypes.value.length > 0 && uniqueParentTypes.value.length <= AVAILABLE_SHAPES.length
+  })
+
+  /**
+   * Map from parent type to its shape
+   * Each unique parent type gets a distinct shape
+   */
+  const parentTypeShapeMap = computed<Record<string, NodeShape>>(() => {
+    if (!model.value?.component_types || !isShapeModeAvailable.value) {
+      return {}
+    }
+
+    // Map parent types to shapes
+    const shapeMap: Record<string, NodeShape> = {}
+    uniqueParentTypes.value.forEach((parentType, index) => {
+      shapeMap[parentType] = AVAILABLE_SHAPES[index]
+    })
+
+    return shapeMap
+  })
+
+  /**
+   * Map from component type to its shape based on direct parent type
+   * All types that share the same direct parent get the same shape
+   */
+  const componentTypeShapeMap = computed<Record<string, NodeShape>>(() => {
+    if (!model.value?.component_types || !isShapeModeAvailable.value) {
+      return {}
+    }
+
+    const componentTypes = model.value.component_types
+
+    // Map each component type to the shape of its parent
+    const shapeMap: Record<string, NodeShape> = {}
+    for (const typeName of Object.keys(componentTypes)) {
+      const parentType = getDirectParentType(typeName, componentTypes)
+      shapeMap[typeName] = parentTypeShapeMap.value[parentType] ?? 'rectangle'
+    }
+
+    return shapeMap
+  })
+
+  /**
+   * Get the shape for a component type by name
+   * Returns null if shape mode is not available or type not found
+   */
+  function getComponentTypeShape(typeName: string): NodeShape | null {
+    return componentTypeShapeMap.value[typeName] ?? null
+  }
+
   return {
     model: readonly(model),
     relationTypes,
+    relationTypesHierarchy,
     relationTypeColorMap,
+    parentTypeColorMap,
     componentTypeColorMap,
+    uniqueParentTypes,
+    isShapeModeAvailable,
+    parentTypeShapeMap,
+    componentTypeShapeMap,
     setModel,
     clearModel,
     getRelationColor,
     getComponentTypeColor,
+    getComponentTypeShape,
   }
 })

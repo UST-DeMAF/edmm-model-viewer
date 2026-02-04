@@ -11,378 +11,380 @@ components:
             artifacts:
               - bash:
                   name: /bin/sh docker network create -d bridge opentelemetry-demo
-                  fileURI: '-'
+                  fileURI: "-"
         - Ensure services are started:
             artifacts:
               - launchd:
-                  name: "[accountingservice, adservice, cartservice, checkoutservice,\
+                  name:
+                    "[accountingservice, adservice, cartservice, checkoutservice,\
                     \ emailservice, flagd, frauddetectionserice, frontend, frontendproxy,\
                     \ grafana, imageprovider, jaeger, kafka, loadgenerator, mongo, opensearch,\
                     \ otelcol, paymentservice, productcatalogservice, prometheus, quoteservice,\
                     \ recommendationservice, shippingservice, valkeycart] started"
-                  fileURI: '-'
+                  fileURI: "-"
         - Ensure services are enabled to start at boot:
             artifacts:
               - launchd:
-                  name: "[accountingservice, adservice, cartservice, checkoutservice,\
+                  name:
+                    "[accountingservice, adservice, cartservice, checkoutservice,\
                     \ emailservice, flagd, frauddetectionserice, frontend, frontendproxy,\
                     \ grafana, imageprovider, jaeger, kafka, loadgenerator, mongo, opensearch,\
                     \ otelcol, paymentservice, productcatalogservice, prometheus, quoteservice,\
                     \ recommendationservice, shippingservice, valkeycart] enabled"
-                  fileURI: '-'
+                  fileURI: "-"
       artifacts: []
   - accountingservice:
       type: accountingservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4318'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4318"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=accountingservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=accountingservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: accountingservice
-        - KAFKA_SERVICE_ADDR: 'kafka:9092'
+        - KAFKA_SERVICE_ADDR: "kafka:9092"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-accountingservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-accountingservice"
   - adservice:
       type: adservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4318'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4318"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=adservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=adservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: adservice
         - OTEL_LOGS_EXPORTER: otlp
-        - AD_SERVICE_PORT: '9555'
+        - AD_SERVICE_PORT: "9555"
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
+        - FLAGD_PORT: "8013"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-adservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-adservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-adservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-adservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-adservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-adservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-adservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-adservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-adservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-adservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-adservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-adservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-adservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-adservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-adservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-adservice"
   - cartservice:
       type: cartservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=cartservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=cartservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: cartservice
-        - CART_SERVICE_PORT: '7070'
-        - VALKEY_ADDR: 'valkeycart:6379'
-        - REDIS_ADDR: 'valkeycart:6379'
-        - ASPNETCORE_URLS: 'http://*:7070'
+        - CART_SERVICE_PORT: "7070"
+        - VALKEY_ADDR: "valkeycart:6379"
+        - REDIS_ADDR: "valkeycart:6379"
+        - ASPNETCORE_URLS: "http://*:7070"
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
+        - FLAGD_PORT: "8013"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-cartservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-cartservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-cartservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-cartservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-cartservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-cartservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-cartservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-cartservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-cartservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-cartservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-cartservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-cartservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-cartservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-cartservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-cartservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-cartservice"
   - checkoutservice:
       type: checkoutservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=checkoutservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=checkoutservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: checkoutservice
         - OTEL_LOGS_EXPORTER: otlp
-        - CHECKOUT_SERVICE_PORT: '5050'
+        - CHECKOUT_SERVICE_PORT: "5050"
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
-        - CART_SERVICE_ADDR: 'cartservice:7070'
-        - CURRENCY_SERVICE_ADDR: 'currencyservice:7001'
-        - EMAIL_SERVICE_ADDR: 'http://emailservice:6060'
-        - PAYMENT_SERVICE_ADDR: 'paymentservice:50051'
-        - PRODUCT_CATALOG_SERVICE_ADDR: 'productcatalogservice:3550'
-        - SHIPPING_SERVICE_ADDR: 'shippingservice:50050'
-        - KAFKA_SERVICE_ADDR: 'kafka:9092'
+        - FLAGD_PORT: "8013"
+        - CART_SERVICE_ADDR: "cartservice:7070"
+        - CURRENCY_SERVICE_ADDR: "currencyservice:7001"
+        - EMAIL_SERVICE_ADDR: "http://emailservice:6060"
+        - PAYMENT_SERVICE_ADDR: "paymentservice:50051"
+        - PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+        - SHIPPING_SERVICE_ADDR: "shippingservice:50050"
+        - KAFKA_SERVICE_ADDR: "kafka:9092"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-checkoutservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-checkoutservice"
   - currencyservice:
       type: currencyservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=currencyservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=currencyservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: currencyservice
         - VERSION: 1.11.1
-        - CURRENCY_SERVICE_PORT: '7001'
+        - CURRENCY_SERVICE_PORT: "7001"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-currencyservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-currencyservice"
   - emailservice:
       type: emailservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: 'http://otelcol:4318/v1/traces'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=emailservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otelcol:4318/v1/traces"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=emailservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: emailservice
-        - EMAIL_SERVICE_PORT: '6060'
+        - EMAIL_SERVICE_PORT: "6060"
         - APP_ENV: production
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-emailservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-emailservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-emailservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-emailservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-emailservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-emailservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-emailservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-emailservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-emailservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-emailservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-emailservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-emailservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-emailservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-emailservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-emailservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-emailservice"
   - flagd:
       type: flagd-SoftwareApplication
       description: null
       properties:
-        - FLAGD_OTEL_COLLECTOR_URI: 'otelcol:4317'
+        - FLAGD_OTEL_COLLECTOR_URI: "otelcol:4317"
         - FLAGD_METRICS_EXPORTER: otel
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=flagd,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=flagd,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: flagd
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-feature/flagd:v0.11.2'
-                  fileURI: 'ghcr.io/open-feature/flagd:v0.11.2'
+                  name: "ghcr.io/open-feature/flagd:v0.11.2"
+                  fileURI: "ghcr.io/open-feature/flagd:v0.11.2"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-feature/flagd:v0.11.2'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-feature/flagd:v0.11.2"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-feature/flagd:v0.11.2'
-                  fileURI: 'ghcr.io/open-feature/flagd:v0.11.2'
+                  name: "ghcr.io/open-feature/flagd:v0.11.2"
+                  fileURI: "ghcr.io/open-feature/flagd:v0.11.2"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-feature/flagd:v0.11.2'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-feature/flagd:v0.11.2"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-feature/flagd:v0.11.2'
-            fileURI: 'ghcr.io/open-feature/flagd:v0.11.2'
+            name: "ghcr.io/open-feature/flagd:v0.11.2"
+            fileURI: "ghcr.io/open-feature/flagd:v0.11.2"
         - file:
             name: demo.flagd.json
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/flagd/files/demo.flagd.json'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/flagd/files/demo.flagd.json"
   - frauddetectionservice:
       type: frauddetectionservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4318'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=frauddetectionservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4318"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=frauddetectionservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: frauddetectionservice
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
-        - KAFKA_SERVICE_ADDR: 'kafka:9092'
+        - FLAGD_PORT: "8013"
+        - KAFKA_SERVICE_ADDR: "kafka:9092"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
-        - OTEL_INSTRUMENTATION_KAFKA_EXPERIMENTAL_SPAN_ATTRIBUTES: 'true'
-        - OTEL_INSTRUMENTATION_MESSAGING_EXPERIMENTAL_RECEIVE_TELEMETRY_ENABLED: 'true'
+        - OTEL_INSTRUMENTATION_KAFKA_EXPERIMENTAL_SPAN_ATTRIBUTES: "true"
+        - OTEL_INSTRUMENTATION_MESSAGING_EXPERIMENTAL_RECEIVE_TELEMETRY_ENABLED: "true"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice"
   - frontend:
       type: frontend-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=frontend,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=frontend,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: frontend
         - VERSION: 1.11.1
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
-        - KAFKA_SERVICE_ADDR: 'kafka:9092'
+        - FLAGD_PORT: "8013"
+        - KAFKA_SERVICE_ADDR: "kafka:9092"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
-        - PORT: '8080'
-        - FRONTEND_ADDR: 'frontend:8080'
-        - AD_SERVICE_ADDR: 'adservice:9555'
-        - CART_SERVICE_ADDR: 'cartservice:7070'
-        - CHECKOUT_SERVICE_ADDR: 'checkoutservice:5050'
-        - CURRENCY_SERVICE_ADDR: 'currencyservice:7001'
-        - PRODUCT_CATALOG_SERVICE_ADDR: 'productcatalogservice:3550'
-        - RECOMMENDATION_SERVICE_ADDR: 'recommendationservice:9001'
-        - SHIPPING_SERVICE_ADDR: 'shippingservice:50050'
+        - PORT: "8080"
+        - FRONTEND_ADDR: "frontend:8080"
+        - AD_SERVICE_ADDR: "adservice:9555"
+        - CART_SERVICE_ADDR: "cartservice:7070"
+        - CHECKOUT_SERVICE_ADDR: "checkoutservice:5050"
+        - CURRENCY_SERVICE_ADDR: "currencyservice:7001"
+        - PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
+        - RECOMMENDATION_SERVICE_ADDR: "recommendationservice:9001"
+        - SHIPPING_SERVICE_ADDR: "shippingservice:50050"
         - ENV_PLATFORM: local
-        - PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: 'http://otelcol:8080/otlp-http/v1/traces'
+        - PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otelcol:8080/otlp-http/v1/traces"
         - WEB_OTEL_SERVICE_NAME: frontend-web
         - OTEL_COLLECTOR_HOST: otelcol
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-frontend'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frontend'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-frontend"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frontend"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-frontend'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-frontend"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-frontend'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frontend'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-frontend"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frontend"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-frontend'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-frontend"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-frontend'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frontend'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-frontend"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frontend"
   - frontendproxy:
       type: frontendproxy-SoftwareApplication
       description: null
       properties:
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=frontendproxy,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=frontendproxy,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: frontendproxy
         - OTEL_COLLECTOR_HOST: otelcol
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
-        - OTEL_COLLECTOR_PORT_GRPC: '4317'
-        - OTEL_COLLECTOR_PORT_HTTP: '4318'
+        - FLAGD_PORT: "8013"
+        - OTEL_COLLECTOR_PORT_GRPC: "4317"
+        - OTEL_COLLECTOR_PORT_HTTP: "4318"
         - FRONTEND_HOST: frontend
-        - FRONTEND_PORT: '8080'
+        - FRONTEND_PORT: "8080"
         - GRAFANA_SERVICE_HOST: grafana
-        - GRAFANA_SERVICE_PORT: '3000'
+        - GRAFANA_SERVICE_PORT: "3000"
         - IMAGE_PROVIDER_HOST: imageprovider
-        - IMAGE_PROVIDER_PORT: '8081'
+        - IMAGE_PROVIDER_PORT: "8081"
         - JAEGER_SERVICE_HOST: jaeger
-        - JAEGER_SERVICE_PORT: '16686'
+        - JAEGER_SERVICE_PORT: "16686"
         - LOCUST_WEB_HOST: loadgenerator
-        - LOCUST_WEB_PORT: '8089'
-        - ENVOY_PORT: '8080'
+        - LOCUST_WEB_PORT: "8089"
+        - ENVOY_PORT: "8080"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-frontendproxy'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-frontendproxy"
   - grafana:
       type: grafana-SoftwareApplication
       description: null
@@ -392,81 +394,81 @@ components:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'grafana/grafana:11.2.0'
-                  fileURI: 'https://hub.docker.com/r/grafana/grafana'
+                  name: "grafana/grafana:11.2.0"
+                  fileURI: "https://hub.docker.com/r/grafana/grafana"
               - bash:
-                  name: '/bin/sh docker pull grafana/grafana:11.2.0'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull grafana/grafana:11.2.0"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'grafana/grafana:11.2.0'
-                  fileURI: 'https://hub.docker.com/r/grafana/grafana'
+                  name: "grafana/grafana:11.2.0"
+                  fileURI: "https://hub.docker.com/r/grafana/grafana"
               - bash:
-                  name: '/bin/sh docker run grafana/grafana:11.2.0'
-                  fileURI: '-'
+                  name: "/bin/sh docker run grafana/grafana:11.2.0"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'grafana/grafana:11.2.0'
-            fileURI: 'https://hub.docker.com/r/grafana/grafana'
+            name: "grafana/grafana:11.2.0"
+            fileURI: "https://hub.docker.com/r/grafana/grafana"
         - file:
             name: opentelemetry-collector.json
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/opentelemetry-collector.json'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/opentelemetry-collector.json"
         - file:
             name: demo-dashboard.json
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/demo-dashboard.json'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/demo-dashboard.json"
         - file:
             name: opensearch.yaml
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/datasources/opensearch.yaml'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/datasources/opensearch.yaml"
         - file:
             name: jaeger.yaml
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/datasources/jaeger.yaml'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/datasources/jaeger.yaml"
         - file:
             name: grafana.ini
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/grafana.ini'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/grafana.ini"
         - file:
             name: demo.yaml
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo.yaml'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo.yaml"
         - file:
             name: default.yaml
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/datasources/default.yaml'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/datasources/default.yaml"
         - file:
             name: spanmetrics-dashboard.json
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/spanmetrics-dashboard.json'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/spanmetrics-dashboard.json"
         - file:
             name: opentelemetry-collector-data-flow.json
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/opentelemetry-collector-data-flow.json'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/grafana/files/provisioning/dashboards/demo/opentelemetry-collector-data-flow.json"
   - imageprovider:
       type: imageprovider-SoftwareApplication
       description: null
       properties:
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=imageprovider,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=imageprovider,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: imageprovider
         - VERSION: 1.11.1
         - OTEL_COLLECTOR_HOST: otelcol
-        - OTEL_COLLECTOR_PORT_GRPC: '4317'
-        - IMAGE_PROVIDER_PORT: '8081'
+        - OTEL_COLLECTOR_PORT_GRPC: "4317"
+        - IMAGE_PROVIDER_PORT: "8081"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-imageprovider'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-imageprovider"
   - jaeger:
       type: all-in-one-SoftwareApplication
       description: null
@@ -476,96 +478,96 @@ components:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'jaegertracing/all-in-one:1.60'
-                  fileURI: 'https://hub.docker.com/r/jaegertracing/all-in-one'
+                  name: "jaegertracing/all-in-one:1.60"
+                  fileURI: "https://hub.docker.com/r/jaegertracing/all-in-one"
               - bash:
-                  name: '/bin/sh docker pull jaegertracing/all-in-one:1.60'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull jaegertracing/all-in-one:1.60"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'jaegertracing/all-in-one:1.60'
-                  fileURI: 'https://hub.docker.com/r/jaegertracing/all-in-one'
+                  name: "jaegertracing/all-in-one:1.60"
+                  fileURI: "https://hub.docker.com/r/jaegertracing/all-in-one"
               - bash:
-                  name: '/bin/sh docker run jaegertracing/all-in-one:1.60'
-                  fileURI: '-'
+                  name: "/bin/sh docker run jaegertracing/all-in-one:1.60"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'jaegertracing/all-in-one:1.60'
-            fileURI: 'https://hub.docker.com/r/jaegertracing/all-in-one'
+            name: "jaegertracing/all-in-one:1.60"
+            fileURI: "https://hub.docker.com/r/jaegertracing/all-in-one"
   - kafka:
       type: kafka-MessageBroker
       description: null
       properties:
-        - KAFKA_SERVICE_ADDR: 'kafka:9092'
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4318'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=kafka,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - KAFKA_SERVICE_ADDR: "kafka:9092"
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4318"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=kafka,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: kafka
         - KAFKA_HEAP_OPTS: -Xmx400m -Xms400m
-        - KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092'
+        - KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-kafka'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-kafka'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-kafka"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-kafka"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-kafka'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-kafka"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-kafka'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-kafka'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-kafka"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-kafka"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-kafka'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-kafka"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-kafka'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-kafka'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-kafka"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-kafka"
   - loadgenerator:
       type: loadgenerator-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=loadgenerator,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=loadgenerator,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: loadgenerator
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
+        - FLAGD_PORT: "8013"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
-        - KAFKA_SERVICE_ADDR: 'kafka:9092'
-        - PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: 'http://otelcol:8080/otlp-http/v1/traces'
-        - PORT: '8080'
-        - LOCUST_HOST: 'http://frontendproxy:8080'
-        - LOCUST_WEB_PORT: '8089'
-        - LOCUST_USERS: '10'
-        - LOCUST_HEADLESS: 'false'
-        - LOCUST_AUTOSTART: 'true'
-        - LOCUST_BROWSER_TRAFFIC_ENABLED: 'true'
+        - KAFKA_SERVICE_ADDR: "kafka:9092"
+        - PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otelcol:8080/otlp-http/v1/traces"
+        - PORT: "8080"
+        - LOCUST_HOST: "http://frontendproxy:8080"
+        - LOCUST_WEB_PORT: "8089"
+        - LOCUST_USERS: "10"
+        - LOCUST_HEADLESS: "false"
+        - LOCUST_AUTOSTART: "true"
+        - LOCUST_BROWSER_TRAFFIC_ENABLED: "true"
         - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
         - LOCUST_WEB_HOST: 0.0.0.0
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-loadgenerator'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-loadgenerator"
   - mongo:
       type: mongo-DatabaseSystem
       description: null
@@ -576,158 +578,158 @@ components:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'mongo:8.0.0-rc9'
-                  fileURI: 'https://hub.docker.com/_/mongo'
+                  name: "mongo:8.0.0-rc9"
+                  fileURI: "https://hub.docker.com/_/mongo"
               - bash:
-                  name: '/bin/sh docker pull mongo:8.0.0-rc9'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull mongo:8.0.0-rc9"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'mongo:8.0.0-rc9'
-                  fileURI: 'https://hub.docker.com/_/mongo'
+                  name: "mongo:8.0.0-rc9"
+                  fileURI: "https://hub.docker.com/_/mongo"
               - bash:
-                  name: '/bin/sh docker run mongo:8.0.0-rc9'
-                  fileURI: '-'
+                  name: "/bin/sh docker run mongo:8.0.0-rc9"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'mongo:8.0.0-rc9'
-            fileURI: 'https://hub.docker.com/_/mongo'
+            name: "mongo:8.0.0-rc9"
+            fileURI: "https://hub.docker.com/_/mongo"
   - opensearch:
       type: opensearch-SoftwareApplication
       description: null
       properties:
         - cluster.name: demo-cluster
         - node.name: demo-node
-        - bootstrap.memory_lock: 'true'
+        - bootstrap.memory_lock: "true"
         - discovery.type: single-node
         - OPENSEARCH_JAVA_OPTS: -Xms300m -Xmx300m
-        - DISABLE_INSTALL_DEMO_CONFIG: 'true'
-        - DISABLE_SECURITY_PLUGIN: 'true'
+        - DISABLE_INSTALL_DEMO_CONFIG: "true"
+        - DISABLE_SECURITY_PLUGIN: "true"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'opensearchproject/opensearch:2.16.0'
-                  fileURI: 'https://hub.docker.com/r/opensearchproject/opensearch'
+                  name: "opensearchproject/opensearch:2.16.0"
+                  fileURI: "https://hub.docker.com/r/opensearchproject/opensearch"
               - bash:
-                  name: '/bin/sh docker pull opensearchproject/opensearch:2.16.0'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull opensearchproject/opensearch:2.16.0"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'opensearchproject/opensearch:2.16.0'
-                  fileURI: 'https://hub.docker.com/r/opensearchproject/opensearch'
+                  name: "opensearchproject/opensearch:2.16.0"
+                  fileURI: "https://hub.docker.com/r/opensearchproject/opensearch"
               - bash:
-                  name: '/bin/sh docker run opensearchproject/opensearch:2.16.0'
-                  fileURI: '-'
+                  name: "/bin/sh docker run opensearchproject/opensearch:2.16.0"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'opensearchproject/opensearch:2.16.0'
-            fileURI: 'https://hub.docker.com/r/opensearchproject/opensearch'
+            name: "opensearchproject/opensearch:2.16.0"
+            fileURI: "https://hub.docker.com/r/opensearchproject/opensearch"
   - otelcol:
       type: opentelemetry-collector-contrib-SoftwareApplication
       description: null
       properties:
         - OTEL_COLLECTOR_HOST: otelcol
-        - OTEL_COLLECTOR_PORT_GRPC: '4317'
-        - OTEL_COLLECTOR_PORT_HTTP: '4318'
-        - ENVOY_PORT: '8080'
+        - OTEL_COLLECTOR_PORT_GRPC: "4317"
+        - OTEL_COLLECTOR_PORT_HTTP: "4318"
+        - ENVOY_PORT: "8080"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'otel/opentelemetry-collector-contrib:0.108.0'
-                  fileURI: 'https://hub.docker.com/r/otel/opentelemetry-collector-contrib'
+                  name: "otel/opentelemetry-collector-contrib:0.108.0"
+                  fileURI: "https://hub.docker.com/r/otel/opentelemetry-collector-contrib"
               - bash:
-                  name: '/bin/sh docker pull otel/opentelemetry-collector-contrib:0.108.0'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull otel/opentelemetry-collector-contrib:0.108.0"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'otel/opentelemetry-collector-contrib:0.108.0'
-                  fileURI: 'https://hub.docker.com/r/otel/opentelemetry-collector-contrib'
+                  name: "otel/opentelemetry-collector-contrib:0.108.0"
+                  fileURI: "https://hub.docker.com/r/otel/opentelemetry-collector-contrib"
               - bash:
-                  name: '/bin/sh docker run otel/opentelemetry-collector-contrib:0.108.0'
-                  fileURI: '-'
+                  name: "/bin/sh docker run otel/opentelemetry-collector-contrib:0.108.0"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'otel/opentelemetry-collector-contrib:0.108.0'
-            fileURI: 'https://hub.docker.com/r/otel/opentelemetry-collector-contrib'
+            name: "otel/opentelemetry-collector-contrib:0.108.0"
+            fileURI: "https://hub.docker.com/r/otel/opentelemetry-collector-contrib"
         - file:
             name: otelcol-config-extras.yml
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/otelcol/files/otelcol-config-extras.yml'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/otelcol/files/otelcol-config-extras.yml"
         - file:
             name: otelcol-config.yml
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/otelcol/files/otelcol-config.yml'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/otelcol/files/otelcol-config.yml"
   - paymentservice:
       type: paymentservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=paymentservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=paymentservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: paymentservice
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
-        - PAYMENT_SERVICE_PORT: '50051'
+        - FLAGD_PORT: "8013"
+        - PAYMENT_SERVICE_PORT: "50051"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-paymentservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-paymentservice"
   - productcatalogservice:
       type: productcatalogservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=productcatalogservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=productcatalogservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: productcatalogservice
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
-        - PRODUCT_CATALOG_SERVICE_PORT: '3550'
+        - FLAGD_PORT: "8013"
+        - PRODUCT_CATALOG_SERVICE_PORT: "3550"
         - MONGO_HOSTNAME: mongo
-        - MONGO_PORT: '27017'
+        - MONGO_PORT: "27017"
         - MONGO_USERNAME: mongo
         - MONGO_PASSWORD: mongo_product_catalog
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice"
   - prometheus:
       type: prometheus-SoftwareApplication
       description: null
@@ -736,122 +738,122 @@ components:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'quay.io/prometheus/prometheus:v2.54.1'
-                  fileURI: 'quay.io/prometheus/prometheus:v2.54.1'
+                  name: "quay.io/prometheus/prometheus:v2.54.1"
+                  fileURI: "quay.io/prometheus/prometheus:v2.54.1"
               - bash:
-                  name: '/bin/sh docker pull quay.io/prometheus/prometheus:v2.54.1'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull quay.io/prometheus/prometheus:v2.54.1"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'quay.io/prometheus/prometheus:v2.54.1'
-                  fileURI: 'quay.io/prometheus/prometheus:v2.54.1'
+                  name: "quay.io/prometheus/prometheus:v2.54.1"
+                  fileURI: "quay.io/prometheus/prometheus:v2.54.1"
               - bash:
-                  name: '/bin/sh docker run quay.io/prometheus/prometheus:v2.54.1'
-                  fileURI: '-'
+                  name: "/bin/sh docker run quay.io/prometheus/prometheus:v2.54.1"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'quay.io/prometheus/prometheus:v2.54.1'
-            fileURI: 'quay.io/prometheus/prometheus:v2.54.1'
+            name: "quay.io/prometheus/prometheus:v2.54.1"
+            fileURI: "quay.io/prometheus/prometheus:v2.54.1"
         - file:
             name: prometheus-config.yaml
-            fileURI: 'file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/prometheus/files/prometheus-config.yaml'
+            fileURI: "file:/usr/share/Evaluation/OTEL-Shop-Ansible/deploymentModel/roles/prometheus/files/prometheus-config.yaml"
   - quoteservice:
       type: quoteservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4318'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=quoteservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4318"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=quoteservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: quoteservice
-        - OTEL_PHP_AUTOLOAD_ENABLED: 'true'
-        - OTEL_PHP_INTERNAL_METRICS_ENABLED: 'true'
-        - QUOTE_SERVICE_PORT: '8090'
+        - OTEL_PHP_AUTOLOAD_ENABLED: "true"
+        - OTEL_PHP_INTERNAL_METRICS_ENABLED: "true"
+        - QUOTE_SERVICE_PORT: "8090"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-quoteservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-quoteservice"
   - recommendationservice:
       type: recommendationservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=recommendationservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=recommendationservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: recommendationservice
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE: cumulative
-        - OTEL_PYTHON_LOG_CORRELATION: 'true'
-        - RECOMMENDATION_SERVICE_PORT: '9001'
-        - PRODUCT_CATALOG_SERVICE_ADDR: 'productcatalogservice:3550'
+        - OTEL_PYTHON_LOG_CORRELATION: "true"
+        - RECOMMENDATION_SERVICE_PORT: "9001"
+        - PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
         - FLAGD_HOST: flagd
-        - FLAGD_PORT: '8013'
+        - FLAGD_PORT: "8013"
         - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-recommendationservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-recommendationservice"
   - shippingservice:
       type: shippingservice-SoftwareApplication
       description: null
       properties:
-        - OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otelcol:4317'
-        - OTEL_RESOURCE_ATTRIBUTES: 'service.name=shippingservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+        - OTEL_EXPORTER_OTLP_ENDPOINT: "http://otelcol:4317"
+        - OTEL_RESOURCE_ATTRIBUTES: "service.name=shippingservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME: shippingservice
-        - SHIPPING_SERVICE_PORT: '50050'
-        - QUOTE_SERVICE_ADDR: 'http://quoteservice:8090'
+        - SHIPPING_SERVICE_PORT: "50050"
+        - QUOTE_SERVICE_ADDR: "http://quoteservice:8090"
       operations:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
               - bash:
-                  name: '/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
-                  fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
+                  name: "ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
+                  fileURI: "ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
               - bash:
-                  name: '/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
-                  fileURI: '-'
+                  name: "/bin/sh docker run ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
-            fileURI: 'ghcr.io/open-telemetry/demo:1.11.1-shippingservice'
+            name: "ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
+            fileURI: "ghcr.io/open-telemetry/demo:1.11.1-shippingservice"
   - valkeycart:
       type: valkey-DatabaseSystem
       description: null
@@ -860,23 +862,23 @@ components:
         - Pull the latest Docker image:
             artifacts:
               - docker_image:
-                  name: 'valkey/valkey:8.0-alpine'
-                  fileURI: 'https://hub.docker.com/r/valkey/valkey'
+                  name: "valkey/valkey:8.0-alpine"
+                  fileURI: "https://hub.docker.com/r/valkey/valkey"
               - bash:
-                  name: '/bin/sh docker pull valkey/valkey:8.0-alpine'
-                  fileURI: '-'
+                  name: "/bin/sh docker pull valkey/valkey:8.0-alpine"
+                  fileURI: "-"
         - Deploy Service:
             artifacts:
               - docker_image:
-                  name: 'valkey/valkey:8.0-alpine'
-                  fileURI: 'https://hub.docker.com/r/valkey/valkey'
+                  name: "valkey/valkey:8.0-alpine"
+                  fileURI: "https://hub.docker.com/r/valkey/valkey"
               - bash:
-                  name: '/bin/sh docker run valkey/valkey:8.0-alpine'
-                  fileURI: '-'
+                  name: "/bin/sh docker run valkey/valkey:8.0-alpine"
+                  fileURI: "-"
       artifacts:
         - docker_image:
-            name: 'valkey/valkey:8.0-alpine'
-            fileURI: 'https://hub.docker.com/r/valkey/valkey'
+            name: "valkey/valkey:8.0-alpine"
+            fileURI: "https://hub.docker.com/r/valkey/valkey"
 relations:
   - jaeger_connectsTo_prometheus:
       type: ConnectsTo
@@ -1054,12 +1056,12 @@ relations:
       properties: []
       operations: []
   - frontend_connectsTo_checkoutservice:
-      type: RelatesTo
+      type: ConnectsTo
       description: null
       source: frontend
       target: checkoutservice
       properties:
-        - test: some value
+        - PORT: 5050
       operations: []
   - frontend_connectsTo_currencyservice:
       type: ConnectsTo
@@ -1258,7 +1260,7 @@ relations:
       properties: []
       operations: []
   - shippingservice_connectsTo_otelcol:
-      type: Test
+      type: ConnectsTo
       description: null
       source: shippingservice
       target: otelcol
@@ -1482,7 +1484,7 @@ relations:
       properties: []
       operations: []
   - grafana_hostedOn_localhost:
-      type: DependsOn
+      type: HostedOn
       description: null
       source: grafana
       target: localhost
@@ -1511,7 +1513,7 @@ relations:
       operations: []
 component_types:
   - BaseType:
-      extends: '-'
+      extends: "-"
       description: This is the base type
       properties: []
       operations: []
@@ -1522,12 +1524,21 @@ component_types:
         - ansible_connection:
             type: STRING
             required: false
-            default_value: ''
+            default_value: ""
       operations: []
   - SoftwareApplication:
       extends: BaseType
       description: null
       properties: []
+      operations: []
+  - adservice-SoftwareApplication:
+      extends: SoftwareApplication
+      description: null
+      properties:
+        - AD_SERVICE_ADDR:
+            type: STRING
+            required: false
+            default_value: adservice:9555
       operations: []
   - grafana-SoftwareApplication:
       extends: SoftwareApplication
@@ -1558,15 +1569,15 @@ component_types:
         - OTEL_COLLECTOR_PORT_GRPC:
             type: STRING
             required: false
-            default_value: '4317'
+            default_value: "4317"
         - OTEL_COLLECTOR_PORT_HTTP:
             type: STRING
             required: false
-            default_value: '4318'
+            default_value: "4318"
         - ENVOY_PORT:
             type: STRING
             required: false
-            default_value: '8080'
+            default_value: "8080"
       operations: []
   - prometheus-SoftwareApplication:
       extends: SoftwareApplication
@@ -1580,7 +1591,7 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4318'
+            default_value: "http://otelcol:4318"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:
             type: STRING
             required: false
@@ -1588,7 +1599,7 @@ component_types:
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=adservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=adservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1600,7 +1611,7 @@ component_types:
         - AD_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '9555'
+            default_value: "9555"
         - FLAGD_HOST:
             type: STRING
             required: false
@@ -1608,7 +1619,7 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
       operations: []
   - cartservice-SoftwareApplication:
       extends: SoftwareApplication
@@ -1617,11 +1628,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=cartservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=cartservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1629,19 +1640,19 @@ component_types:
         - CART_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '7070'
+            default_value: "7070"
         - VALKEY_ADDR:
             type: STRING
             required: false
-            default_value: 'valkeycart:6379'
+            default_value: "valkeycart:6379"
         - REDIS_ADDR:
             type: STRING
             required: false
-            default_value: 'valkeycart:6379'
+            default_value: "valkeycart:6379"
         - ASPNETCORE_URLS:
             type: STRING
             required: false
-            default_value: 'http://*:7070'
+            default_value: "http://*:7070"
         - FLAGD_HOST:
             type: STRING
             required: false
@@ -1649,7 +1660,7 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
       operations: []
   - checkoutservice-SoftwareApplication:
       extends: SoftwareApplication
@@ -1658,7 +1669,7 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:
             type: STRING
             required: false
@@ -1666,7 +1677,7 @@ component_types:
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=checkoutservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=checkoutservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1678,7 +1689,7 @@ component_types:
         - CHECKOUT_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '5050'
+            default_value: "5050"
         - FLAGD_HOST:
             type: STRING
             required: false
@@ -1686,35 +1697,35 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - CART_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'cartservice:7070'
+            default_value: "cartservice:7070"
         - CURRENCY_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'currencyservice:7001'
+            default_value: "currencyservice:7001"
         - EMAIL_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'http://emailservice:6060'
+            default_value: "http://emailservice:6060"
         - PAYMENT_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'paymentservice:50051'
+            default_value: "paymentservice:50051"
         - PRODUCT_CATALOG_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'productcatalogservice:3550'
+            default_value: "productcatalogservice:3550"
         - SHIPPING_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'shippingservice:50050'
+            default_value: "shippingservice:50050"
         - KAFKA_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'kafka:9092'
+            default_value: "kafka:9092"
       operations: []
   - currencyservice-SoftwareApplication:
       extends: SoftwareApplication
@@ -1723,11 +1734,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=currencyservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=currencyservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1739,7 +1750,7 @@ component_types:
         - CURRENCY_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '7001'
+            default_value: "7001"
       operations: []
   - emailservice-SoftwareApplication:
       extends: SoftwareApplication
@@ -1748,11 +1759,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4318/v1/traces'
+            default_value: "http://otelcol:4318/v1/traces"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=emailservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=emailservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1760,7 +1771,7 @@ component_types:
         - EMAIL_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '6060'
+            default_value: "6060"
         - APP_ENV:
             type: STRING
             required: false
@@ -1773,7 +1784,7 @@ component_types:
         - FLAGD_OTEL_COLLECTOR_URI:
             type: STRING
             required: false
-            default_value: 'otelcol:4317'
+            default_value: "otelcol:4317"
         - FLAGD_METRICS_EXPORTER:
             type: STRING
             required: false
@@ -1781,7 +1792,7 @@ component_types:
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=flagd,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=flagd,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1794,11 +1805,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4318'
+            default_value: "http://otelcol:4318"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=frauddetectionservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=frauddetectionservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1810,11 +1821,11 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - KAFKA_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'kafka:9092'
+            default_value: "kafka:9092"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:
             type: STRING
             required: false
@@ -1822,11 +1833,11 @@ component_types:
         - OTEL_INSTRUMENTATION_KAFKA_EXPERIMENTAL_SPAN_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - OTEL_INSTRUMENTATION_MESSAGING_EXPERIMENTAL_RECEIVE_TELEMETRY_ENABLED:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
       operations: []
   - frontend-SoftwareApplication:
       extends: SoftwareApplication
@@ -1835,11 +1846,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=frontend,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=frontend,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1855,11 +1866,11 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - KAFKA_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'kafka:9092'
+            default_value: "kafka:9092"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:
             type: STRING
             required: false
@@ -1867,39 +1878,39 @@ component_types:
         - PORT:
             type: STRING
             required: false
-            default_value: '8080'
+            default_value: "8080"
         - FRONTEND_ADDR:
             type: STRING
             required: false
-            default_value: 'frontend:8080'
+            default_value: "frontend:8080"
         - AD_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'adservice:9555'
+            default_value: "adservice:9555"
         - CART_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'cartservice:7070'
+            default_value: "cartservice:7070"
         - CHECKOUT_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'checkoutservice:5050'
+            default_value: "checkoutservice:5050"
         - CURRENCY_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'currencyservice:7001'
+            default_value: "currencyservice:7001"
         - PRODUCT_CATALOG_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'productcatalogservice:3550'
+            default_value: "productcatalogservice:3550"
         - RECOMMENDATION_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'recommendationservice:9001'
+            default_value: "recommendationservice:9001"
         - SHIPPING_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'shippingservice:50050'
+            default_value: "shippingservice:50050"
         - ENV_PLATFORM:
             type: STRING
             required: false
@@ -1907,7 +1918,7 @@ component_types:
         - PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:8080/otlp-http/v1/traces'
+            default_value: "http://otelcol:8080/otlp-http/v1/traces"
         - WEB_OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1924,7 +1935,7 @@ component_types:
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=frontendproxy,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=frontendproxy,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -1940,15 +1951,15 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - OTEL_COLLECTOR_PORT_GRPC:
             type: STRING
             required: false
-            default_value: '4317'
+            default_value: "4317"
         - OTEL_COLLECTOR_PORT_HTTP:
             type: STRING
             required: false
-            default_value: '4318'
+            default_value: "4318"
         - FRONTEND_HOST:
             type: STRING
             required: false
@@ -1956,7 +1967,7 @@ component_types:
         - FRONTEND_PORT:
             type: STRING
             required: false
-            default_value: '8080'
+            default_value: "8080"
         - GRAFANA_SERVICE_HOST:
             type: STRING
             required: false
@@ -1964,7 +1975,7 @@ component_types:
         - GRAFANA_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '3000'
+            default_value: "3000"
         - IMAGE_PROVIDER_HOST:
             type: STRING
             required: false
@@ -1972,7 +1983,7 @@ component_types:
         - IMAGE_PROVIDER_PORT:
             type: STRING
             required: false
-            default_value: '8081'
+            default_value: "8081"
         - JAEGER_SERVICE_HOST:
             type: STRING
             required: false
@@ -1980,7 +1991,7 @@ component_types:
         - JAEGER_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '16686'
+            default_value: "16686"
         - LOCUST_WEB_HOST:
             type: STRING
             required: false
@@ -1988,11 +1999,11 @@ component_types:
         - LOCUST_WEB_PORT:
             type: STRING
             required: false
-            default_value: '8089'
+            default_value: "8089"
         - ENVOY_PORT:
             type: STRING
             required: false
-            default_value: '8080'
+            default_value: "8080"
       operations: []
   - imageprovider-SoftwareApplication:
       extends: SoftwareApplication
@@ -2001,7 +2012,7 @@ component_types:
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=imageprovider,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=imageprovider,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2017,11 +2028,11 @@ component_types:
         - OTEL_COLLECTOR_PORT_GRPC:
             type: STRING
             required: false
-            default_value: '4317'
+            default_value: "4317"
         - IMAGE_PROVIDER_PORT:
             type: STRING
             required: false
-            default_value: '8081'
+            default_value: "8081"
       operations: []
   - loadgenerator-SoftwareApplication:
       extends: SoftwareApplication
@@ -2030,11 +2041,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=loadgenerator,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=loadgenerator,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2046,7 +2057,7 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE:
             type: STRING
             required: false
@@ -2054,39 +2065,39 @@ component_types:
         - KAFKA_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'kafka:9092'
+            default_value: "kafka:9092"
         - PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:8080/otlp-http/v1/traces'
+            default_value: "http://otelcol:8080/otlp-http/v1/traces"
         - PORT:
             type: STRING
             required: false
-            default_value: '8080'
+            default_value: "8080"
         - LOCUST_HOST:
             type: STRING
             required: false
-            default_value: 'http://frontendproxy:8080'
+            default_value: "http://frontendproxy:8080"
         - LOCUST_WEB_PORT:
             type: STRING
             required: false
-            default_value: '8089'
+            default_value: "8089"
         - LOCUST_USERS:
             type: STRING
             required: false
-            default_value: '10'
+            default_value: "10"
         - LOCUST_HEADLESS:
             type: STRING
             required: false
-            default_value: 'false'
+            default_value: "false"
         - LOCUST_AUTOSTART:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - LOCUST_BROWSER_TRAFFIC_ENABLED:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION:
             type: STRING
             required: false
@@ -2103,11 +2114,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=paymentservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=paymentservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2123,11 +2134,11 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - PAYMENT_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '50051'
+            default_value: "50051"
       operations: []
   - productcatalogservice-SoftwareApplication:
       extends: SoftwareApplication
@@ -2136,11 +2147,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=productcatalogservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=productcatalogservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2156,11 +2167,11 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - PRODUCT_CATALOG_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '3550'
+            default_value: "3550"
         - MONGO_HOSTNAME:
             type: STRING
             required: false
@@ -2168,7 +2179,7 @@ component_types:
         - MONGO_PORT:
             type: STRING
             required: false
-            default_value: '27017'
+            default_value: "27017"
         - MONGO_USERNAME:
             type: STRING
             required: false
@@ -2185,11 +2196,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4318'
+            default_value: "http://otelcol:4318"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=quoteservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=quoteservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2197,15 +2208,15 @@ component_types:
         - OTEL_PHP_AUTOLOAD_ENABLED:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - OTEL_PHP_INTERNAL_METRICS_ENABLED:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - QUOTE_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '8090'
+            default_value: "8090"
       operations: []
   - recommendationservice-SoftwareApplication:
       extends: SoftwareApplication
@@ -2214,11 +2225,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=recommendationservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=recommendationservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2230,15 +2241,15 @@ component_types:
         - OTEL_PYTHON_LOG_CORRELATION:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - RECOMMENDATION_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '9001'
+            default_value: "9001"
         - PRODUCT_CATALOG_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'productcatalogservice:3550'
+            default_value: "productcatalogservice:3550"
         - FLAGD_HOST:
             type: STRING
             required: false
@@ -2246,7 +2257,7 @@ component_types:
         - FLAGD_PORT:
             type: STRING
             required: false
-            default_value: '8013'
+            default_value: "8013"
         - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION:
             type: STRING
             required: false
@@ -2259,11 +2270,11 @@ component_types:
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4317'
+            default_value: "http://otelcol:4317"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=shippingservice,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=shippingservice,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2271,11 +2282,11 @@ component_types:
         - SHIPPING_SERVICE_PORT:
             type: STRING
             required: false
-            default_value: '50050'
+            default_value: "50050"
         - QUOTE_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'http://quoteservice:8090'
+            default_value: "http://quoteservice:8090"
       operations: []
   - opensearch-SoftwareApplication:
       extends: SoftwareApplication
@@ -2292,7 +2303,7 @@ component_types:
         - bootstrap.memory_lock:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - discovery.type:
             type: STRING
             required: false
@@ -2304,11 +2315,11 @@ component_types:
         - DISABLE_INSTALL_DEMO_CONFIG:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
         - DISABLE_SECURITY_PLUGIN:
             type: STRING
             required: false
-            default_value: 'true'
+            default_value: "true"
       operations: []
   - DatabaseSystem:
       extends: SoftwareApplication
@@ -2345,15 +2356,15 @@ component_types:
         - KAFKA_SERVICE_ADDR:
             type: STRING
             required: false
-            default_value: 'kafka:9092'
+            default_value: "kafka:9092"
         - OTEL_EXPORTER_OTLP_ENDPOINT:
             type: STRING
             required: false
-            default_value: 'http://otelcol:4318'
+            default_value: "http://otelcol:4318"
         - OTEL_RESOURCE_ATTRIBUTES:
             type: STRING
             required: false
-            default_value: 'service.name=kafka,service.namespace=opentelemetry-demo,service.version=1.11.1'
+            default_value: "service.name=kafka,service.namespace=opentelemetry-demo,service.version=1.11.1"
         - OTEL_SERVICE_NAME:
             type: STRING
             required: false
@@ -2365,11 +2376,11 @@ component_types:
         - KAFKA_ADVERTISED_LISTENERS:
             type: STRING
             required: false
-            default_value: 'PLAINTEXT://kafka:9092'
+            default_value: "PLAINTEXT://kafka:9092"
       operations: []
 relation_types:
   - DependsOn:
-      extends: '-'
+      extends: "-"
       description: generic relation type
       properties: []
       operations: []
@@ -2383,16 +2394,6 @@ relation_types:
       description: connects to relation
       properties: []
       operations: []
-  - RelatesTo:
-      extends: ConnectsTo
-      description: relates to relation
-      properties: []
-      operations: []
-  - Test:
-      extends: HostedOn
-      description: test relation
-      properties: []
-      operations: []
   - AttachesTo:
       extends: DependsOn
       description: attaches to relation
@@ -2400,5 +2401,5 @@ relation_types:
         - location:
             type: STRING
             required: true
-            default_value: ''
+            default_value: ""
       operations: []

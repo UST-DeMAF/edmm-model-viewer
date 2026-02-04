@@ -18,12 +18,12 @@ interface HighlightResult {
  */
 export function buildDependencyGraph(
   model: EdmmDeploymentModel,
-  visibleRelations: string[],
+  hiddenRelations: string[],
 ): {
-    dependencies: Map<string, Set<string>>
-    dependents: Map<string, Set<string>>
-    edgeMap: Map<string, { source: string, target: string, id: string }>
-  } {
+  dependencies: Map<string, Set<string>>
+  dependents: Map<string, Set<string>>
+  edgeMap: Map<string, { source: string, target: string, id: string }>
+} {
   const dependencies = new Map<string, Set<string>>()
   const dependents = new Map<string, Set<string>>()
   const edgeMap = new Map<string, { source: string, target: string, id: string }>()
@@ -37,7 +37,7 @@ export function buildDependencyGraph(
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Only consider visible relation types
-      if (!isRelationVisible(relation.type, visibleRelations)) {
+      if (!isRelationVisible(relation.type, hiddenRelations)) {
         return
       }
 
@@ -69,9 +69,9 @@ export function buildDependencyGraph(
  */
 export function computeDependentCounts(
   model: EdmmDeploymentModel,
-  visibleRelations: string[],
+  hiddenRelations: string[],
 ): Map<string, number> {
-  const { dependents } = buildDependencyGraph(model, visibleRelations)
+  const { dependents } = buildDependencyGraph(model, hiddenRelations)
   const counts = new Map<string, number>()
   const cache = new Map<string, Set<string>>()
 
@@ -120,7 +120,7 @@ export function computeHighlights(
   model: EdmmDeploymentModel,
   selectedNodeId: string | null,
   interactionMode: InteractionMode,
-  visibleRelations: string[],
+  hiddenRelations: string[],
 ): HighlightResult {
   const highlightedNodeIds = new Set<string>()
   const highlightedEdgeIds = new Set<string>()
@@ -129,7 +129,7 @@ export function computeHighlights(
     return { highlightedNodeIds, highlightedEdgeIds }
   }
 
-  const { dependencies, dependents, edgeMap } = buildDependencyGraph(model, visibleRelations)
+  const { dependencies, dependents, edgeMap } = buildDependencyGraph(model, hiddenRelations)
 
   // Always highlight the selected node
   highlightedNodeIds.add(selectedNodeId)
@@ -240,7 +240,7 @@ export function applyEdgeHighlights(
 export function computeShortestPaths(
   model: EdmmDeploymentModel,
   anchorNodeId: string,
-  visibleRelations: string[],
+  hiddenRelations: string[],
 ): Map<string, { path: string[], edges: string[] }> {
   const result = new Map<string, { path: string[], edges: string[] }>()
 
@@ -255,7 +255,7 @@ export function computeShortestPaths(
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Only consider visible relation types
-      if (!isRelationVisible(relation.type, visibleRelations)) {
+      if (!isRelationVisible(relation.type, hiddenRelations)) {
         return
       }
 
@@ -292,10 +292,12 @@ export function computeShortestPaths(
 }
 
 /**
- * Compute highlights for the shortest path from anchor to hovered node
+ * Compute highlights for the shortest path between anchor and hovered node.
+ * Checks both directions (anchor→hovered and hovered→anchor) and uses the shorter path.
  */
 export function computeShortestPathHighlights(
-  shortestPaths: Map<string, { path: string[], edges: string[] }>,
+  forwardPaths: Map<string, { path: string[], edges: string[] }>,
+  reversePaths: Map<string, { path: string[], edges: string[] }>,
   hoveredNodeId: string | null,
   anchorNodeId: string,
 ): HighlightResult {
@@ -305,14 +307,33 @@ export function computeShortestPathHighlights(
   // Always highlight the anchor node
   highlightedNodeIds.add(anchorNodeId)
 
-  if (hoveredNodeId && shortestPaths.has(hoveredNodeId)) {
-    const { path, edges } = shortestPaths.get(hoveredNodeId)!
+  if (hoveredNodeId) {
+    // Get forward path (anchor → hovered)
+    const forwardPath = forwardPaths.get(hoveredNodeId)
+    // Get reverse path (hovered → anchor)
+    const reversePath = reversePaths.get(anchorNodeId)
 
-    // Highlight all nodes in the path
-    path.forEach(id => highlightedNodeIds.add(id))
+    // Determine which path to use (shorter one, or the one that exists)
+    let selectedPath: { path: string[], edges: string[] } | undefined
 
-    // Highlight all edges in the path
-    edges.forEach(id => highlightedEdgeIds.add(id))
+    if (forwardPath && reversePath) {
+      // Both paths exist, choose the shorter one
+      selectedPath = forwardPath.path.length <= reversePath.path.length ? forwardPath : reversePath
+    }
+    else if (forwardPath) {
+      selectedPath = forwardPath
+    }
+    else if (reversePath) {
+      selectedPath = reversePath
+    }
+
+    if (selectedPath) {
+      // Highlight all nodes in the path
+      selectedPath.path.forEach(id => highlightedNodeIds.add(id))
+
+      // Highlight all edges in the path
+      selectedPath.edges.forEach(id => highlightedEdgeIds.add(id))
+    }
   }
 
   return { highlightedNodeIds, highlightedEdgeIds }

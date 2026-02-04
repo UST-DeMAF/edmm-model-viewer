@@ -3,6 +3,7 @@ import type { ComponentTypeDefinition } from '~/lib/type-hierarchy'
 import { onKeyStroke } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { isDark, toggleDark } from '~/composables/dark'
+import { useGraphStore } from '~/stores/graph'
 import { useGraphSettingsStore } from '~/stores/graph-settings'
 import GraphSearch from './GraphSearch.vue'
 import NodeTypeFilter from './NodeTypeFilter.vue'
@@ -29,8 +30,9 @@ const emit = defineEmits<{
 }>()
 
 const store = useGraphSettingsStore()
+const graphStore = useGraphStore()
 
-const { searchQuery, layoutDirection, layoutAlgorithm, interactionMode, visibleNodeTypes, isSearchOpen, scaleWithDependencies, typeDifferentiationMode } = storeToRefs(store)
+const { layoutDirection, layoutAlgorithm, interactionMode, visibleNodeTypes, isSearchOpen, scaleWithDependencies, typeDifferentiationMode, isSidebarExpanded: isExpanded } = storeToRefs(store)
 
 function openSearch() {
   isSearchOpen.value = true
@@ -38,7 +40,6 @@ function openSearch() {
 
 function closeSearch() {
   isSearchOpen.value = false
-  searchQuery.value = ''
 }
 
 // Listen for Ctrl+F to open search, preventing default browser find
@@ -62,18 +63,23 @@ onKeyStroke('Alt', (e) => {
 </script>
 
 <template>
-  <div class="py-3 border-e bg-sidebar flex flex-col gap-3 h-full w-14 items-center justify-start">
+  <div class="py-3 border-e bg-sidebar flex flex-col gap-3 h-full items-start justify-start relative transition-all duration-300 ease-in-out" :class="isExpanded ? 'w-50' : 'w-14'">
+    <Button @click="isExpanded = !isExpanded" class="absolute top-3 right-0 size-9 bg-sidebar border border-s-0 translate-x-[100%] rounded-s-none z-2 text-foreground p-0 hover:bg-sidebar-accent">
+      <i :class="isExpanded ? 'i-tabler:layout-sidebar-left-collapse' : 'i-tabler:layout-sidebar-left-expand'" class="size-5" />
+    </Button>
     <div class="flex items-center">
-      <img src="@/assets/images/edmm.png" alt="Logo" class="size-8">
+      <img src="@/assets/images/edmm.png" alt="Logo" class="size-8 mx-3">
     </div>
-    <div class="flex flex-col gap-1 w-full items-center">
+    <div class="flex flex-col gap-1 w-full items-start px-2.5">
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <div>
-            <Tooltip :open="showTooltips">
+          <div class="w-full">
+            <Tooltip :open="showTooltips && !isExpanded">
               <TooltipTrigger as-child>
-                <Button variant="ghost" size="icon">
-                  <i class="i-lucide-layout-dashboard size-5" />
+                <Button variant="ghost" class="p-2 w-full justify-start gap-2">
+                  <i class="i-lucide-layout-dashboard size-5 shrink-0" />
+                  <span v-if="isExpanded" class="truncate">Layout</span>
+                  <i v-if="isExpanded" class="i-lucide-chevron-right size-4 shrink-0 ml-auto opacity-60" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
@@ -129,9 +135,12 @@ onKeyStroke('Alt', (e) => {
                 Color
               </span>
             </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="SHAPE" @select.prevent>
+            <DropdownMenuRadioItem value="SHAPE" :disabled="!graphStore.isShapeModeAvailable" @select.prevent>
               <span class="inline-flex gap-2 items-center">
                 Shape
+                <span v-if="!graphStore.isShapeModeAvailable" class="text-xs text-muted-foreground">
+                  (max 4 types)
+                </span>
               </span>
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
@@ -139,11 +148,13 @@ onKeyStroke('Alt', (e) => {
       </DropdownMenu>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <div>
-            <Tooltip :open="showTooltips">
+          <div class="w-full">
+            <Tooltip :open="showTooltips && !isExpanded">
               <TooltipTrigger as-child>
-                <Button variant="ghost" size="icon">
-                  <i class="i-lucide-filter size-5" />
+                <Button variant="ghost" class="p-2 w-full justify-start gap-2">
+                  <i class="i-lucide-filter size-5 shrink-0" />
+                  <span v-if="isExpanded" class="truncate">Filter</span>
+                  <i v-if="isExpanded" class="i-lucide-chevron-right size-4 shrink-0 ml-auto opacity-60" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
@@ -159,10 +170,11 @@ onKeyStroke('Alt', (e) => {
           />
         </DropdownMenuContent>
       </DropdownMenu>
-      <Tooltip :open="showTooltips">
+      <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
-          <Button variant="ghost" size="icon" @click="openSearch">
-            <i class="i-lucide-search size-5" />
+          <Button variant="ghost" class="p-2 w-full justify-start gap-2" @click="openSearch">
+            <i class="i-lucide-search size-5 shrink-0" />
+            <span v-if="isExpanded" class="truncate">Search</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right" class="flex gap-2 items-center">
@@ -174,15 +186,16 @@ onKeyStroke('Alt', (e) => {
           </span>
         </TooltipContent>
       </Tooltip>
-      <hr class="my-3 border-foreground/20 w-[50%]">
-      <Tooltip :open="showTooltips">
+      <hr class="my-2">
+      <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
           <Button
             :variant="interactionMode === 'NORMAL' ? 'default' : 'ghost'"
-            size="icon"
+            class="p-2 w-full justify-start gap-2"
             @click="interactionMode = 'NORMAL'"
           >
-            <i class="i-lucide-mouse-pointer-2 size-5" />
+            <i class="i-lucide-mouse-pointer-2 size-5 shrink-0" />
+            <span v-if="isExpanded" class="truncate">Normal</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
@@ -191,11 +204,13 @@ onKeyStroke('Alt', (e) => {
       </Tooltip>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <div>
-            <Tooltip :open="showTooltips">
+          <div class="w-full">
+            <Tooltip :open="showTooltips && !isExpanded">
               <TooltipTrigger as-child>
-                <Button :variant="interactionMode !== 'NORMAL' && interactionMode !== 'SHORTEST_PATH' ? 'default' : 'ghost'" size="icon">
-                  <i class="i-mingcute-finger-tap-line size-5" />
+                <Button :variant="interactionMode !== 'NORMAL' && interactionMode !== 'SHORTEST_PATH' ? 'default' : 'ghost'" class="p-2 w-full justify-start gap-2">
+                  <i class="i-mingcute-finger-tap-line size-5 shrink-0" />
+                  <span v-if="isExpanded" class="truncate">Highlight</span>
+                  <i v-if="isExpanded" class="i-lucide-chevron-right size-4 shrink-0 ml-auto opacity-60" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
@@ -219,39 +234,42 @@ onKeyStroke('Alt', (e) => {
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Tooltip :open="showTooltips">
+      <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
           <Button
             :variant="interactionMode === 'SHORTEST_PATH' ? 'default' : 'ghost'"
-            size="icon"
+            class="p-2 w-full justify-start gap-2"
             @click="interactionMode = 'SHORTEST_PATH'"
           >
-            <i class="i-lucide-route size-5" />
+            <i class="i-lucide-route size-5 shrink-0" />
+            <span v-if="isExpanded" class="truncate">Shortest Path</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
           Shortest Path Mode
         </TooltipContent>
       </Tooltip>
-      <GraphSearch v-if="isSearchOpen" v-model="searchQuery" @close="closeSearch" />
+      <GraphSearch v-if="isSearchOpen" @close="closeSearch" />
     </div>
     <div class="grow" />
-    <div class="flex flex-col gap-1 items-center">
-      <Tooltip :open="showTooltips">
+    <div class="flex flex-col gap-1 w-full items-start px-2.5">
+      <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
-          <Button variant="ghost" size="icon" @click="emit('close')">
-            <i class="i-solar-close-circle-linear size-5" />
+          <Button variant="ghost" class="p-2 w-full justify-start gap-2" @click="emit('close')">
+            <i class="i-solar-close-circle-linear size-5 shrink-0" />
+            <span v-if="isExpanded" class="truncate">Close Graph</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
           <p>Close Graph</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip :open="showTooltips">
+      <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
-          <Button variant="ghost" size="icon" @click="toggleDark()">
-            <i v-if="isDark" class="i-lucide-sun size-5" />
-            <i v-else class="i-lucide-moon size-5" />
+          <Button variant="ghost" class="p-2 w-full justify-start gap-2" @click="toggleDark()">
+            <i v-if="isDark" class="i-lucide-sun size-5 shrink-0" />
+            <i v-else class="i-lucide-moon size-5 shrink-0" />
+            <span v-if="isExpanded" class="truncate">{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">

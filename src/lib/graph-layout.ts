@@ -15,8 +15,8 @@ export type LayoutAlgorithm = 'default' | 'layered' | 'force' | 'mrtree'
 export interface LayoutConfig {
   interactionMode: 'NORMAL' | 'HIGHLIGHT_DIRECT_SUCCESSORS' | 'HIGHLIGHT_DIRECT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS' | 'SHORTEST_PATH'
   showEdgeLabels: boolean
-  /** Which relation types to display (by type name string) */
-  visibleRelations: string[]
+  /** Which relation types are hidden (by type name string) */
+  hiddenRelations: string[]
   /** Direction of the graph layout */
   layoutDirection: LayoutDirection
   /** Whether to scale nodes based on their dependency count */
@@ -44,16 +44,12 @@ export interface LayoutResult {
 }
 
 /**
- * Check if a relation type is visible based on the visible relations list.
- * If visibleRelations is empty, all relations are visible.
- * Otherwise, checks if the relation type is in the list.
+ * Check if a relation type is visible based on the hidden relations list.
+ * A relation is visible if it's NOT in the hidden list.
  */
-export function isRelationVisible(relationType: string, visibleRelations: string[]): boolean {
-  // If no filter is set (empty array), show all relations
-  if (visibleRelations.length === 0) {
-    return true
-  }
-  return visibleRelations.includes(relationType)
+export function isRelationVisible(relationType: string, hiddenRelations: string[]): boolean {
+  // Relation is visible if it's NOT in the hidden list
+  return !hiddenRelations.includes(relationType)
 }
 
 /**
@@ -68,7 +64,7 @@ export function computeEdges(
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Skip if relation type is not in visible relations list
-      if (!isRelationVisible(relation.type, config.visibleRelations)) {
+      if (!isRelationVisible(relation.type, config.hiddenRelations)) {
         return
       }
 
@@ -128,7 +124,7 @@ function runFlatDagreLayout(
   if (model.relations) {
     Object.values(model.relations).forEach((relation) => {
       // Skip if relation type is not in visible relations list
-      if (!isRelationVisible(relation.type, config.visibleRelations)) {
+      if (!isRelationVisible(relation.type, config.hiddenRelations)) {
         return
       }
 
@@ -188,7 +184,7 @@ function computeNodeScales(
     return new Map()
   }
 
-  const counts = computeDependentCounts(model, config.visibleRelations)
+  const counts = computeDependentCounts(model, config.hiddenRelations)
   const maxCount = Math.max(...counts.values(), 1)
 
   const scaleFactors = new Map<string, number>()
@@ -238,7 +234,7 @@ async function runElkLayout(
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Skip if relation type is not in visible relations list
-      if (!isRelationVisible(relation.type, config.visibleRelations)) {
+      if (!isRelationVisible(relation.type, config.hiddenRelations)) {
         return
       }
 

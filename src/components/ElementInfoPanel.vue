@@ -414,7 +414,7 @@ const isEmpty = computed(() => {
                     <li v-for="(artifact, idx) in op.artifacts" :key="idx" class="mb-1 flex gap-2">
                       <template v-for="(artData, artType) in artifact" :key="artType">
                         <span class="text-chart-2 font-medium">{{ artType }}:</span>
-                        <span class="font-mono break-all">{{ typeof artData === 'object' && artData && 'name' in artData ? artData.name : artData }}</span>
+                        <span class="font-mono break-all">{{ typeof artData === 'object' && artData && 'name' in artData ? artData?.name : artData }}</span>
                       </template>
                     </li>
                   </ul>

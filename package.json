@@ -52,9 +52,11 @@
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",
     "@iconify-json/carbon": "catalog:dev",
+    "@iconify-json/hugeicons": "^1.2.23",
     "@iconify-json/lucide": "catalog:",
     "@iconify-json/mingcute": "catalog:",
     "@iconify-json/solar": "catalog:",
+    "@iconify-json/tabler": "^1.2.26",
     "@intlify/unplugin-vue-i18n": "catalog:build",
     "@shikijs/markdown-it": "catalog:build",
     "@types/dagre": "catalog:",
@@ -95,6 +97,7 @@
     "vite-plugin-vue-layouts": "catalog:build",
     "vite-ssg": "catalog:build",
     "vite-ssg-sitemap": "catalog:build",
+    "vite-svg-loader": "^5.1.0",
     "vitest": "catalog:dev",
     "vue-tsc": "catalog:dev"
   },

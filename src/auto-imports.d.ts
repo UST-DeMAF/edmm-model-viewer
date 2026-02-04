@@ -327,7 +327,7 @@ declare global {
   export type { InteractionMode, TypeDifferentiationMode } from './stores/graph-settings'
   import('./stores/graph-settings')
   // @ts-ignore
-  export type { RelationTypeInfo } from './stores/graph'
+  export type { RelationTypeInfo, RelationTreeItem, NodeShape } from './stores/graph'
   import('./stores/graph')
   // @ts-ignore
   export type { Transformation } from './stores/transformations'

@@ -29,6 +29,7 @@ import ElementInfoPanel from './ElementInfoPanel.vue'
 import EdmmEdge from './graph/EdmmEdge.vue'
 import EdmmNode from './graph/EdmmNode.vue'
 import GraphSettings from './GraphSettings.vue'
+import NodeLegend from './NodeLegend.vue'
 
 const emit = defineEmits<{
   close: []
@@ -156,13 +157,22 @@ watch(
   { immediate: true, deep: true },
 )
 
-// Compute shortest paths from anchor node (for SHORTEST_PATH mode)
-const shortestPaths = computed(() => {
+// Compute shortest paths from anchor node (for SHORTEST_PATH mode) - forward direction
+const forwardPaths = computed(() => {
   const anchorNode = settingsStore.shortestPathAnchorNode
   if (!anchorNode || settingsStore.interactionMode !== 'SHORTEST_PATH' || !model.value) {
     return new Map<string, { path: string[], edges: string[] }>()
   }
-  return computeShortestPaths(model.value, anchorNode, settingsStore.config.visibleRelations)
+  return computeShortestPaths(model.value, anchorNode, settingsStore.config.hiddenRelations)
+})
+
+// Compute shortest paths from hovered node (for SHORTEST_PATH mode) - reverse direction
+const reversePaths = computed(() => {
+  const hoveredNodeId = hoveredNode.value?.id
+  if (!hoveredNodeId || settingsStore.interactionMode !== 'SHORTEST_PATH' || !model.value) {
+    return new Map<string, { path: string[], edges: string[] }>()
+  }
+  return computeShortestPaths(model.value, hoveredNodeId, settingsStore.config.hiddenRelations)
 })
 
 // Compute highlighted nodes and edges based on hovered node and interaction mode
@@ -172,7 +182,8 @@ const highlights = computed(() => {
     const anchorNode = settingsStore.shortestPathAnchorNode
     if (anchorNode) {
       return computeShortestPathHighlights(
-        shortestPaths.value,
+        forwardPaths.value,
+        reversePaths.value,
         hoveredNode.value?.id ?? null,
         anchorNode,
       )
@@ -187,7 +198,7 @@ const highlights = computed(() => {
     model.value,
     hoveredNode.value?.id ?? null,
     settingsStore.interactionMode,
-    settingsStore.config.visibleRelations,
+    settingsStore.config.hiddenRelations,
   )
 })
 
@@ -275,6 +286,16 @@ const displayNodes = computed<Node[]>(() => {
     if (typeColor)
       classes.push('edmm-node--type-colored')
 
+    // Add type-based shape if SHAPE mode is enabled and available
+    const nodeShape = settingsStore.typeDifferentiationMode === 'SHAPE'
+      && graphStore.isShapeModeAvailable
+      && node.data?.type
+      ? graphStore.getComponentTypeShape(node.data.type)
+      : undefined
+
+    if (nodeShape)
+      classes.push(`edmm-node--shape-${nodeShape}`)
+
     // Merge type color CSS variable with existing node style (preserving dimensions)
     const mergedStyle = typeColor
       ? { ...node.style, '--type-color': typeColor }
@@ -287,13 +308,14 @@ const displayNodes = computed<Node[]>(() => {
       data: {
         ...node.data,
         typeColor,
+        shape: nodeShape,
       },
     }
   })
 })
 
 // Apply highlighting to edges and add custom type
-// Filter by visibleRelations (display-only filtering, doesn't affect layout)
+// Filter by hiddenRelations (display-only filtering, doesn't affect layout)
 const displayEdges = computed<Edge[]>(() => {
   // Get visible node IDs for filtering edges
   const visibleNodeIdsFilter = settingsStore.visibleNodeIds
@@ -304,7 +326,7 @@ const displayEdges = computed<Edge[]>(() => {
   // First, filter edges by visible relation types AND visible nodes
   const filteredEdges = rawEdges.value.filter((edge) => {
     // Check if relation type is visible (uses dynamic string-based filtering)
-    const relationVisible = !edge.label || isRelationVisible(edge.label, settingsStore.config.visibleRelations)
+    const relationVisible = !edge.label || isRelationVisible(edge.label, settingsStore.config.hiddenRelations)
 
     // If we have a visible node filter, only show edges between visible nodes
     if (visibleNodeSet !== null) {
@@ -420,7 +442,30 @@ function closeInfoPanel() {
     <ContextMenu>
       <ContextMenuTrigger as-child>
         <div class="grow h-full relative">
-          <EdgeLegend class="bottom-3 left-3 absolute z-1" />
+          <div v-if="settingsStore.interactionMode === 'SHORTEST_PATH'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
+            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
+              Click on a node to select it, then hover over another node to show the shortest path between them
+            </div>
+          </div>
+          <div v-if="settingsStore.interactionMode === 'HIGHLIGHT_DIRECT_PREDECESSORS'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
+            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
+              Hover over a node to highlight its direct predecessors
+            </div>
+          </div>
+          <div v-if="settingsStore.interactionMode === 'HIGHLIGHT_DIRECT_SUCCESSORS'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
+            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
+              Hover over a node to highlight its direct successors
+            </div>
+          </div>
+          <div v-if="settingsStore.interactionMode === 'HIGHLIGHT_NEIGHBOURS'" class="text-xs text-muted-foreground flex w-full top-3 justify-center absolute z-1">
+            <div class="text-center max-w-[300px] bg-sidebar border rounded-lg p-2">
+              Hover over a node to highlight its direct neighbours
+            </div>
+          </div>
+          <div class="flex flex-col bottom-3 left-3 absolute z-1">
+            <NodeLegend class="rounded-b-0" />
+            <EdgeLegend class="rounded-t-0" />
+          </div>
 
           <!-- Floating banner when viewing filtered nodes -->
           <div
@@ -591,5 +636,50 @@ function closeInfoPanel() {
   border-color: var(--type-color) !important;
   --node-foreground: black !important;
   --node-background: white !important;
+}
+
+/* ===========================================
+   Shape-based node differentiation
+   =========================================== */
+
+/* Rectangle - default, no changes needed */
+
+/* Circle shape */
+.vue-flow__node.edmm-node.edmm-node--shape-circle {
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1;
+  justify-content: center;
+}
+
+/* Hexagon shape - uses ::before pseudo-element for clip-path so handles stay at node boundaries */
+.vue-flow__node.edmm-node.edmm-node--shape-hexagon {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 20px !important;
+}
+
+.vue-flow__node.edmm-node.edmm-node--shape-hexagon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+  background: var(--node-background);
+  z-index: -1;
+}
+
+/* Parallelogram shape - uses ::before pseudo-element for clip-path so handles stay at node boundaries */
+.vue-flow__node.edmm-node.edmm-node--shape-parallelogram {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 15px !important;
+}
+
+.vue-flow__node.edmm-node.edmm-node--shape-parallelogram::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
+  background: var(--node-background);
+  z-index: -1;
 }
 </style>
