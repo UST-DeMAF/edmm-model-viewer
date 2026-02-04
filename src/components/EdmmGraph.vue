@@ -496,6 +496,7 @@ function closeInfoPanel() {
             :min-zoom="0.3"
             :max-zoom="2.5"
             :zoom-on-double-click="false"
+            :delete-key-code="false"
             @edge-mouse-enter="onEdgeMouseEnter"
             @edge-mouse-leave="onEdgeMouseLeave"
           >
