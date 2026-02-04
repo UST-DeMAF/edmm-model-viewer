@@ -17,7 +17,6 @@ interface GraphSettingsState {
   hiddenRelations: string[]
   layoutDirection: LayoutDirection
   layoutAlgorithm: LayoutAlgorithm
-  visibleNodeTypes: string[]
   scaleWithDependencies: boolean
   typeDifferentiationMode: TypeDifferentiationMode
   shortestPathAnchorNode: string | null
@@ -31,7 +30,6 @@ const DEFAULT_STATE: GraphSettingsState = {
   hiddenRelations: [], // Empty = all relations visible (none hidden)
   layoutDirection: 'horizontal',
   layoutAlgorithm: 'default',
-  visibleNodeTypes: [], // Empty = show all types
   scaleWithDependencies: false,
   typeDifferentiationMode: 'COLOR',
   shortestPathAnchorNode: null,
@@ -71,11 +69,6 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
   const layoutAlgorithm = computed({
     get: () => state.value.layoutAlgorithm,
     set: val => state.value.layoutAlgorithm = val,
-  })
-
-  const visibleNodeTypes = computed({
-    get: () => state.value.visibleNodeTypes,
-    set: val => state.value.visibleNodeTypes = val,
   })
 
   const scaleWithDependencies = computed({
@@ -157,7 +150,6 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     hiddenRelations,
     layoutDirection,
     layoutAlgorithm,
-    visibleNodeTypes,
     scaleWithDependencies,
     typeDifferentiationMode,
     shortestPathAnchorNode,

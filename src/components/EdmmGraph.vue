@@ -237,7 +237,7 @@ const displayNodes = computed<Node[]>(() => {
   // Apply node type filtering ONLY if neither search NOR hover interaction is active
   // Both search and hover interaction override node type filter while active
   if (!isSearchActive && !isHoverInteractionActive) {
-    const visibleTypes = settingsStore.visibleNodeTypes ?? []
+    const visibleTypes = graphStore.visibleNodeTypes ?? []
     const componentTypes = model.value?.component_types ?? {}
     if (visibleTypes.length > 0) {
       nodes = nodes.map((node) => {
@@ -363,7 +363,7 @@ const displayEdges = computed<Edge[]>(() => {
   const isNormalMode = settingsStore.interactionMode === 'NORMAL'
   const isShortestPathMode = settingsStore.interactionMode === 'SHORTEST_PATH'
   const isHoverInteractionActive = !isNormalMode && !isShortestPathMode && !!hoveredNode.value
-  const visibleTypes = settingsStore.visibleNodeTypes ?? []
+  const visibleTypes = graphStore.visibleNodeTypes ?? []
   const componentTypes = model.value?.component_types ?? {}
 
   // Determine if node type filtering should dim edges

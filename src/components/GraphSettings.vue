@@ -36,7 +36,8 @@ const graphStore = useGraphStore()
 // Register interaction mode keyboard shortcuts
 useInteractionModeKeybinds()
 
-const { layoutDirection, layoutAlgorithm, interactionMode, visibleNodeTypes, isSearchOpen, scaleWithDependencies, typeDifferentiationMode, isSidebarExpanded: isExpanded } = storeToRefs(store)
+const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, scaleWithDependencies, typeDifferentiationMode, isSidebarExpanded: isExpanded } = storeToRefs(store)
+const { visibleNodeTypes } = storeToRefs(graphStore)
 
 function openSearch() {
   isSearchOpen.value = true

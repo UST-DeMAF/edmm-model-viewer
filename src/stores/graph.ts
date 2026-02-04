@@ -81,6 +81,9 @@ export const useGraphStore = defineStore('graph', () => {
   // The deployment model to be displayed in the graph
   const model = ref<EdmmDeploymentModel | null>(null)
 
+  // Visible node types filter (empty = show all types)
+  const visibleNodeTypes = ref<string[]>([])
+
   /**
    * Computed relation types with their colors, derived from the model
    */
@@ -353,6 +356,7 @@ export const useGraphStore = defineStore('graph', () => {
 
   return {
     model: readonly(model),
+    visibleNodeTypes,
     relationTypes,
     relationTypesHierarchy,
     relationTypeColorMap,
