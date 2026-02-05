@@ -1,7 +1,8 @@
 import type { EdmmDeploymentModel } from '~/lib/io'
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import { computed, readonly, ref } from 'vue'
 import { isDark } from '~/composables/dark'
+import { useGraphSettingsStore } from './graph-settings'
 
 /**
  * Represents a relation type with its computed display color
@@ -67,6 +68,47 @@ function generateComplementaryColors(count: number, isDarkMode: boolean, hueOffs
 }
 
 /**
+ * Generate colorblind-friendly colors for users with red-green color weakness
+ * Uses a blue-orange-yellow palette that avoids problematic red-green combinations
+ * @param count Number of colors to generate
+ * @param isDarkMode Whether dark mode is active (affects lightness)
+ * @param hueOffset Starting hue offset (default 0)
+ */
+function generateColorblindFriendlyColors(count: number, isDarkMode: boolean, hueOffset: number = 0): string[] {
+  if (count === 0)
+    return []
+
+  // Minimal set of maximally distinct colorblind-safe hues
+  // Each hue is chosen to be as far apart as possible while avoiding red-green spectrum
+  // These work well for deuteranopia and protanopia (red-green color blindness)
+  const safeHues = [
+    220, // Blue
+    35, // Orange
+    280, // Purple
+    180, // Cyan
+    55, // Yellow (distinct enough from orange due to higher lightness difference)
+    320, // Pink/Magenta (not red, safe for colorblind)
+  ]
+
+  const colors: string[] = []
+  const baseSaturation = 80
+  const baseLightness = isDarkMode ? 65 : 45
+
+  for (let i = 0; i < count; i++) {
+    const hueIndex = i % safeHues.length
+    const hue = (safeHues[hueIndex] + hueOffset) % 360
+
+    // Vary lightness slightly for additional distinction when cycling through hues again
+    const cycle = Math.floor(i / safeHues.length)
+    const lightness = baseLightness + (cycle * 12) // Shift lightness each cycle
+
+    colors.push(`hsl(${Math.round(hue)}, ${baseSaturation}%, ${Math.min(lightness, 80)}%)`)
+  }
+
+  return colors
+}
+
+/**
  * Convert a camelCase or PascalCase string to a human-readable label
  * e.g., 'HostedOn' -> 'Hosted On', 'connectsTo' -> 'Connects To'
  */
@@ -78,6 +120,10 @@ function toHumanReadable(name: string): string {
 }
 
 export const useGraphStore = defineStore('graph', () => {
+  // Access the settings store for colorBlindMode
+  const settingsStore = useGraphSettingsStore()
+  const { colorBlindMode } = storeToRefs(settingsStore)
+
   // The deployment model to be displayed in the graph
   const model = ref<EdmmDeploymentModel | null>(null)
 
@@ -93,7 +139,9 @@ export const useGraphStore = defineStore('graph', () => {
     }
 
     const typeNames = Object.keys(model.value.relation_types)
-    const colors = generateComplementaryColors(typeNames.length, isDark.value)
+    const colors = colorBlindMode.value
+      ? generateColorblindFriendlyColors(typeNames.length, isDark.value)
+      : generateComplementaryColors(typeNames.length, isDark.value)
 
     return typeNames.map((name, index) => ({
       name,
@@ -222,8 +270,9 @@ export const useGraphStore = defineStore('graph', () => {
     // Generate colors for parent types with offset from edge colors
     // Using half the golden angle (68.75°) ensures node colors fall between edge colors
     const sortedParentTypes = Array.from(parentTypes).sort()
-    const halfGoldenAngle = 137.508 / 2 // ~68.75° offset for maximum distance from edge colors
-    const colors = generateComplementaryColors(sortedParentTypes.length, isDark.value, halfGoldenAngle)
+    const colors = colorBlindMode.value
+      ? generateColorblindFriendlyColors(sortedParentTypes.length, isDark.value)
+      : generateComplementaryColors(sortedParentTypes.length, isDark.value)
 
     // Create parent type -> color mapping
     const colorMap: Record<string, string> = {}
