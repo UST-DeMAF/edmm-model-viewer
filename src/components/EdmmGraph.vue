@@ -678,7 +678,7 @@ function closeInfoPanel() {
 
 /* Textured variant for overflow types (6th+ type uses dot pattern) - dark */
 .vue-flow__node.edmm-node.edmm-node--type-colored.edmm-node--textured.edmm-node--type-dark {
-  background: radial-gradient(circle, rgba(0, 0, 0, 0.4) 2px, transparent 2px),
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.6) 2px, transparent 2px),
     linear-gradient(
       to bottom,
       color-mix(in oklch, var(--type-color) 100%, black),

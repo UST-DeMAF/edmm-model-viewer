@@ -86,7 +86,7 @@ function getColorStyle(item: { color: string | null, colorType: 'dark' | 'light'
 
   if (item.textured) {
     // Use white dots for light types, dark dots for dark types
-    const dotColor = item.colorType === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)'
+    const dotColor = item.colorType === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.5)'
     return {
       background: `radial-gradient(circle, ${dotColor} 1.5px, transparent 1.5px), ${item.color}`,
       backgroundSize: '6px 6px, 100% 100%',
