@@ -3,17 +3,20 @@ import { defineStore } from 'pinia'
 import { computed, readonly, ref } from 'vue'
 
 /**
- * Represents a color pair with background and foreground colors
+ * Represents a color pair for nodes with background and brightness type
+ * The type determines text color and gradient mixing:
+ * - 'dark': white text, mix bg with black for gradient
+ * - 'light': dark text, mix bg with white for gradient
  */
-export interface ColorPair {
+export interface NodeColorPair {
   bg: string
-  fg: string
+  type: 'dark' | 'light'
 }
 
 /**
- * Extended color info that includes texture flag for overflow types
+ * Extended color info for nodes that includes texture flag for overflow types
  */
-export interface ColorInfo extends ColorPair {
+export interface NodeColorInfo extends NodeColorPair {
   textured: boolean
 }
 
@@ -21,24 +24,24 @@ export interface ColorInfo extends ColorPair {
  * Colorblind-friendly palette for nodes (5 colors)
  * Uses orange-blue spectrum which is safe for red-green color blindness
  */
-const NODE_COLORBLIND_PALETTE: ColorPair[] = [
-  { bg: '#c44601', fg: '#000000' }, // Burnt Orange
-  { bg: '#f57600', fg: '#000000' }, // Orange
-  { bg: '#8babf1', fg: '#000000' }, // Light Blue
-  { bg: '#0073e6', fg: '#000000' }, // Blue
-  { bg: '#054fb9', fg: '#000000' }, // Dark Blue
+const NODE_COLORBLIND_PALETTE: NodeColorPair[] = [
+  { bg: '#c44601', type: 'dark' }, // Burnt Orange
+  { bg: '#f57600', type: 'light' }, // Orange
+  { bg: '#8babf1', type: 'light' }, // Light Blue
+  { bg: '#0073e6', type: 'dark' }, // Blue
+  { bg: '#054fb9', type: 'dark' }, // Dark Blue
 ]
 
 /**
  * Colorblind-friendly palette for edges/relations (5 colors)
  * Uses green-pink spectrum which is distinguishable for most color blindness types
  */
-const EDGE_COLORBLIND_PALETTE: ColorPair[] = [
-  { bg: '#5ba300', fg: '#000000' }, // Green
-  { bg: '#89ce00', fg: '#000000' }, // Light Green
-  { bg: '#0073e6', fg: '#ffffff' }, // Blue
-  { bg: '#e6308a', fg: '#000000' }, // Pink
-  { bg: '#b51963', fg: '#ffffff' }, // Dark Pink
+const EDGE_COLORBLIND_PALETTE: string[] = [
+  '#5ba300', // Green
+  '#89ce00', // Light Green
+  '#0073e6', // Blue
+  '#e6308a', // Pink
+  '#b51963', // Dark Pink
 ]
 
 /**
@@ -51,8 +54,6 @@ export interface RelationTypeInfo {
   label: string
   /** Background color for this relation type */
   color: string
-  /** Foreground/text color for contrast */
-  fg: string
   /** Whether this type uses a textured pattern (for overflow beyond palette size) */
   textured: boolean
   /** Optional description from the model */
@@ -66,7 +67,6 @@ export interface RelationTreeItem {
   name: string
   label: string
   color: string
-  fg: string
   textured: boolean
   description?: string | null
   children?: RelationTreeItem[]
@@ -113,14 +113,13 @@ export const useGraphStore = defineStore('graph', () => {
 
     return typeNames.map((name, index) => {
       const paletteIndex = index % EDGE_COLORBLIND_PALETTE.length
-      const colorPair = EDGE_COLORBLIND_PALETTE[paletteIndex]
+      const color = EDGE_COLORBLIND_PALETTE[paletteIndex]
       const isTextured = index >= EDGE_COLORBLIND_PALETTE.length
 
       return {
         name,
         label: toHumanReadable(name),
-        color: colorPair.bg,
-        fg: colorPair.fg,
+        color,
         textured: isTextured,
         description: model.value!.relation_types![name].description,
       }
@@ -147,7 +146,6 @@ export const useGraphStore = defineStore('graph', () => {
         name: rt.name,
         label: rt.label,
         color: rt.color,
-        fg: rt.fg,
         textured: rt.textured,
         description: rt.description,
         children: [],
@@ -231,7 +229,7 @@ export const useGraphStore = defineStore('graph', () => {
    * Map from parent type to its color info
    * Each unique parent type gets a distinct color from the palette
    */
-  const parentTypeColorMap = computed<Record<string, ColorInfo>>(() => {
+  const parentTypeColorMap = computed<Record<string, NodeColorInfo>>(() => {
     if (!model.value?.component_types) {
       return {}
     }
@@ -248,7 +246,7 @@ export const useGraphStore = defineStore('graph', () => {
     const sortedParentTypes = Array.from(parentTypes).sort()
 
     // Create parent type -> color info mapping using NODE_COLORBLIND_PALETTE
-    const colorMap: Record<string, ColorInfo> = {}
+    const colorMap: Record<string, NodeColorInfo> = {}
     sortedParentTypes.forEach((parentType, index) => {
       const paletteIndex = index % NODE_COLORBLIND_PALETTE.length
       const colorPair = NODE_COLORBLIND_PALETTE[paletteIndex]
@@ -256,7 +254,7 @@ export const useGraphStore = defineStore('graph', () => {
 
       colorMap[parentType] = {
         bg: colorPair.bg,
-        fg: colorPair.fg,
+        type: colorPair.type,
         textured: isTextured,
       }
     })
@@ -268,16 +266,16 @@ export const useGraphStore = defineStore('graph', () => {
    * Map from component type to its color info based on direct parent type
    * All types that share the same direct parent get the same color
    */
-  const componentTypeColorMap = computed<Record<string, ColorInfo>>(() => {
+  const componentTypeColorMap = computed<Record<string, NodeColorInfo>>(() => {
     if (!model.value?.component_types) {
       return {}
     }
 
     const componentTypes = model.value.component_types
-    const defaultColor: ColorInfo = { bg: '#808080', fg: '#ffffff', textured: false }
+    const defaultColor: NodeColorInfo = { bg: '#808080', type: 'dark', textured: false }
 
     // Map each component type to the color info of its direct parent
-    const colorMap: Record<string, ColorInfo> = {}
+    const colorMap: Record<string, NodeColorInfo> = {}
     for (const typeName of Object.keys(componentTypes)) {
       const parentType = getDirectParentType(typeName, componentTypes)
       colorMap[typeName] = parentTypeColorMap.value[parentType] ?? defaultColor
@@ -290,8 +288,8 @@ export const useGraphStore = defineStore('graph', () => {
    * Get the color info for a component type by name
    * Falls back to a default gray if not found
    */
-  function getComponentTypeColor(typeName: string): ColorInfo {
-    return componentTypeColorMap.value[typeName] ?? { bg: '#808080', fg: '#ffffff', textured: false }
+  function getComponentTypeColor(typeName: string): NodeColorInfo {
+    return componentTypeColorMap.value[typeName] ?? { bg: '#808080', type: 'dark', textured: false }
   }
 
   /**

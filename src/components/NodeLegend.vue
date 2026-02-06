@@ -28,6 +28,7 @@ const legendItems = computed(() => {
         type: typeName,
         label: toHumanReadable(typeName),
         color: colorInfo?.bg ?? '#808080',
+        colorType: colorInfo?.type ?? 'light',
         textured: colorInfo?.textured ?? false,
         shape: null as NodeShape | null,
       }
@@ -39,6 +40,7 @@ const legendItems = computed(() => {
       type: typeName,
       label: toHumanReadable(typeName),
       color: null as string | null,
+      colorType: 'light' as const,
       textured: false,
       shape: parentTypeShapeMap.value[typeName] ?? 'rectangle',
     }))
@@ -77,14 +79,16 @@ function getShapeIcon(shape: NodeShape | null): string {
 }
 
 // Get the style object for a color legend item (with optional dot pattern for textured items)
-function getColorStyle(item: { color: string | null, textured: boolean }): Record<string, string> {
+function getColorStyle(item: { color: string | null, colorType: 'dark' | 'light', textured: boolean }): Record<string, string> {
   if (!item.color) {
     return {}
   }
 
   if (item.textured) {
+    // Use white dots for light types, dark dots for dark types
+    const dotColor = item.colorType === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)'
     return {
-      background: `radial-gradient(circle, rgba(255,255,255,0.5) 1.5px, transparent 1.5px), ${item.color}`,
+      background: `radial-gradient(circle, ${dotColor} 1.5px, transparent 1.5px), ${item.color}`,
       backgroundSize: '6px 6px, 100% 100%',
     }
   }
