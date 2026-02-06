@@ -11,7 +11,6 @@ import NodeTypeFilter from './NodeTypeFilter.vue'
 import { Button } from './ui/button'
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -20,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
 import { Kbd } from './ui/kbd'
-import { Switch } from './ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 
 const props = defineProps<{
@@ -37,7 +35,7 @@ const graphStore = useGraphStore()
 // Register interaction mode keyboard shortcuts
 useInteractionModeKeybinds()
 
-const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, scaleWithDependencies, typeDifferentiationMode, isSidebarExpanded: isExpanded, colorBlindMode } = storeToRefs(store)
+const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, typeDifferentiationMode, isSidebarExpanded: isExpanded } = storeToRefs(store)
 const { visibleNodeTypes } = storeToRefs(graphStore)
 
 function openSearch() {
@@ -307,24 +305,7 @@ onKeyStroke('Alt', (e) => {
           <p>Close Graph</p>
         </TooltipContent>
       </Tooltip>
-      <div class="px-2 flex gap-2 w-full items-center" :class="isExpanded ? '' : 'justify-center'">
-        <Tooltip :open="showTooltips && !isExpanded">
-          <TooltipTrigger as-child>
-            <div class="flex gap-2 items-center" :class="isExpanded ? 'w-full' : ''">
-              <i class="i-lucide-eye opacity-70 shrink-0 size-5" />
-              <template v-if="isExpanded">
-                <span class="text-sm">Color Blind Mode</span>
-                <div class="grow" />
-                <Switch v-model="colorBlindMode" />
-              </template>
-              <Switch v-else v-model="colorBlindMode" class="scale-90" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Color Blind Mode (Red-Green)</p>
-          </TooltipContent>
-        </Tooltip>
-      </div>
+
       <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
           <Button variant="ghost" class="p-2 gap-2 w-full justify-start" @click="toggleDark()">

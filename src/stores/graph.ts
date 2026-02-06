@@ -1,8 +1,45 @@
 import type { EdmmDeploymentModel } from '~/lib/io'
-import { defineStore, storeToRefs } from 'pinia'
+import { defineStore } from 'pinia'
 import { computed, readonly, ref } from 'vue'
-import { isDark } from '~/composables/dark'
-import { useGraphSettingsStore } from './graph-settings'
+
+/**
+ * Represents a color pair with background and foreground colors
+ */
+export interface ColorPair {
+  bg: string
+  fg: string
+}
+
+/**
+ * Extended color info that includes texture flag for overflow types
+ */
+export interface ColorInfo extends ColorPair {
+  textured: boolean
+}
+
+/**
+ * Colorblind-friendly palette for nodes (5 colors)
+ * Uses orange-blue spectrum which is safe for red-green color blindness
+ */
+const NODE_COLORBLIND_PALETTE: ColorPair[] = [
+  { bg: '#c44601', fg: '#000000' }, // Burnt Orange
+  { bg: '#f57600', fg: '#000000' }, // Orange
+  { bg: '#8babf1', fg: '#000000' }, // Light Blue
+  { bg: '#0073e6', fg: '#000000' }, // Blue
+  { bg: '#054fb9', fg: '#000000' }, // Dark Blue
+]
+
+/**
+ * Colorblind-friendly palette for edges/relations (5 colors)
+ * Uses green-pink spectrum which is distinguishable for most color blindness types
+ */
+const EDGE_COLORBLIND_PALETTE: ColorPair[] = [
+  { bg: '#5ba300', fg: '#000000' }, // Green
+  { bg: '#89ce00', fg: '#000000' }, // Light Green
+  { bg: '#0073e6', fg: '#ffffff' }, // Blue
+  { bg: '#e6308a', fg: '#000000' }, // Pink
+  { bg: '#b51963', fg: '#ffffff' }, // Dark Pink
+]
 
 /**
  * Represents a relation type with its computed display color
@@ -12,8 +49,12 @@ export interface RelationTypeInfo {
   name: string
   /** Human-readable label (e.g., 'Hosted On', 'Connects To') */
   label: string
-  /** HSL color string for this relation type */
+  /** Background color for this relation type */
   color: string
+  /** Foreground/text color for contrast */
+  fg: string
+  /** Whether this type uses a textured pattern (for overflow beyond palette size) */
+  textured: boolean
   /** Optional description from the model */
   description?: string | null
 }
@@ -25,6 +66,8 @@ export interface RelationTreeItem {
   name: string
   label: string
   color: string
+  fg: string
+  textured: boolean
   description?: string | null
   children?: RelationTreeItem[]
 }
@@ -40,75 +83,6 @@ export type NodeShape = 'rectangle' | 'circle' | 'hexagon' | 'parallelogram'
 const AVAILABLE_SHAPES: NodeShape[] = ['rectangle', 'circle', 'hexagon', 'parallelogram']
 
 /**
- * Generate evenly-distributed HSL colors for maximum visual distinction
- * Uses golden ratio for optimal hue distribution
- * @param count Number of colors to generate
- * @param isDarkMode Whether dark mode is active (affects lightness)
- * @param hueOffset Starting hue offset (default 0). Use half the golden angle (~68.75) to offset from another color set
- */
-function generateComplementaryColors(count: number, isDarkMode: boolean, hueOffset: number = 0): string[] {
-  if (count === 0)
-    return []
-
-  const colors: string[] = []
-  const saturation = 70 // Vibrant but not overwhelming
-  // Brighter colors in dark mode for better visibility
-  const lightness = isDarkMode ? 60 : 50
-
-  // Use golden angle (137.5°) for optimal distribution
-  const goldenAngle = 137.508
-  let hue = 220 + hueOffset // Start with a blue-ish hue, plus any offset
-
-  for (let i = 0; i < count; i++) {
-    colors.push(`hsl(${Math.round(hue % 360)}, ${saturation}%, ${lightness}%)`)
-    hue += goldenAngle
-  }
-
-  return colors
-}
-
-/**
- * Generate colorblind-friendly colors for users with red-green color weakness
- * Uses a blue-orange-yellow palette that avoids problematic red-green combinations
- * @param count Number of colors to generate
- * @param isDarkMode Whether dark mode is active (affects lightness)
- * @param hueOffset Starting hue offset (default 0)
- */
-function generateColorblindFriendlyColors(count: number, isDarkMode: boolean, hueOffset: number = 0): string[] {
-  if (count === 0)
-    return []
-
-  // Minimal set of maximally distinct colorblind-safe hues
-  // Each hue is chosen to be as far apart as possible while avoiding red-green spectrum
-  // These work well for deuteranopia and protanopia (red-green color blindness)
-  const safeHues = [
-    220, // Blue
-    35, // Orange
-    280, // Purple
-    180, // Cyan
-    55, // Yellow (distinct enough from orange due to higher lightness difference)
-    320, // Pink/Magenta (not red, safe for colorblind)
-  ]
-
-  const colors: string[] = []
-  const baseSaturation = 80
-  const baseLightness = isDarkMode ? 65 : 45
-
-  for (let i = 0; i < count; i++) {
-    const hueIndex = i % safeHues.length
-    const hue = (safeHues[hueIndex] + hueOffset) % 360
-
-    // Vary lightness slightly for additional distinction when cycling through hues again
-    const cycle = Math.floor(i / safeHues.length)
-    const lightness = baseLightness + (cycle * 12) // Shift lightness each cycle
-
-    colors.push(`hsl(${Math.round(hue)}, ${baseSaturation}%, ${Math.min(lightness, 80)}%)`)
-  }
-
-  return colors
-}
-
-/**
  * Convert a camelCase or PascalCase string to a human-readable label
  * e.g., 'HostedOn' -> 'Hosted On', 'connectsTo' -> 'Connects To'
  */
@@ -120,10 +94,6 @@ function toHumanReadable(name: string): string {
 }
 
 export const useGraphStore = defineStore('graph', () => {
-  // Access the settings store for colorBlindMode
-  const settingsStore = useGraphSettingsStore()
-  const { colorBlindMode } = storeToRefs(settingsStore)
-
   // The deployment model to be displayed in the graph
   const model = ref<EdmmDeploymentModel | null>(null)
 
@@ -132,6 +102,7 @@ export const useGraphStore = defineStore('graph', () => {
 
   /**
    * Computed relation types with their colors, derived from the model
+   * Uses fixed colorblind-friendly palette with texture fallback for overflow
    */
   const relationTypes = computed<RelationTypeInfo[]>(() => {
     if (!model.value?.relation_types) {
@@ -139,16 +110,21 @@ export const useGraphStore = defineStore('graph', () => {
     }
 
     const typeNames = Object.keys(model.value.relation_types)
-    const colors = colorBlindMode.value
-      ? generateColorblindFriendlyColors(typeNames.length, isDark.value)
-      : generateComplementaryColors(typeNames.length, isDark.value)
 
-    return typeNames.map((name, index) => ({
-      name,
-      label: toHumanReadable(name),
-      color: colors[index],
-      description: model.value!.relation_types![name].description,
-    }))
+    return typeNames.map((name, index) => {
+      const paletteIndex = index % EDGE_COLORBLIND_PALETTE.length
+      const colorPair = EDGE_COLORBLIND_PALETTE[paletteIndex]
+      const isTextured = index >= EDGE_COLORBLIND_PALETTE.length
+
+      return {
+        name,
+        label: toHumanReadable(name),
+        color: colorPair.bg,
+        fg: colorPair.fg,
+        textured: isTextured,
+        description: model.value!.relation_types![name].description,
+      }
+    })
   })
 
   /**
@@ -171,6 +147,8 @@ export const useGraphStore = defineStore('graph', () => {
         name: rt.name,
         label: rt.label,
         color: rt.color,
+        fg: rt.fg,
+        textured: rt.textured,
         description: rt.description,
         children: [],
       })
@@ -250,10 +228,10 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   /**
-   * Map from parent type to its color
-   * Each unique parent type gets a distinct color
+   * Map from parent type to its color info
+   * Each unique parent type gets a distinct color from the palette
    */
-  const parentTypeColorMap = computed<Record<string, string>>(() => {
+  const parentTypeColorMap = computed<Record<string, ColorInfo>>(() => {
     if (!model.value?.component_types) {
       return {}
     }
@@ -267,49 +245,53 @@ export const useGraphStore = defineStore('graph', () => {
       parentTypes.add(parentType)
     }
 
-    // Generate colors for parent types with offset from edge colors
-    // Using half the golden angle (68.75°) ensures node colors fall between edge colors
     const sortedParentTypes = Array.from(parentTypes).sort()
-    const colors = colorBlindMode.value
-      ? generateColorblindFriendlyColors(sortedParentTypes.length, isDark.value)
-      : generateComplementaryColors(sortedParentTypes.length, isDark.value)
 
-    // Create parent type -> color mapping
-    const colorMap: Record<string, string> = {}
+    // Create parent type -> color info mapping using NODE_COLORBLIND_PALETTE
+    const colorMap: Record<string, ColorInfo> = {}
     sortedParentTypes.forEach((parentType, index) => {
-      colorMap[parentType] = colors[index]
+      const paletteIndex = index % NODE_COLORBLIND_PALETTE.length
+      const colorPair = NODE_COLORBLIND_PALETTE[paletteIndex]
+      const isTextured = index >= NODE_COLORBLIND_PALETTE.length
+
+      colorMap[parentType] = {
+        bg: colorPair.bg,
+        fg: colorPair.fg,
+        textured: isTextured,
+      }
     })
 
     return colorMap
   })
 
   /**
-   * Map from component type to its color based on direct parent type
+   * Map from component type to its color info based on direct parent type
    * All types that share the same direct parent get the same color
    */
-  const componentTypeColorMap = computed<Record<string, string>>(() => {
+  const componentTypeColorMap = computed<Record<string, ColorInfo>>(() => {
     if (!model.value?.component_types) {
       return {}
     }
 
     const componentTypes = model.value.component_types
+    const defaultColor: ColorInfo = { bg: '#808080', fg: '#ffffff', textured: false }
 
-    // Map each component type to the color of its direct parent
-    const colorMap: Record<string, string> = {}
+    // Map each component type to the color info of its direct parent
+    const colorMap: Record<string, ColorInfo> = {}
     for (const typeName of Object.keys(componentTypes)) {
       const parentType = getDirectParentType(typeName, componentTypes)
-      colorMap[typeName] = parentTypeColorMap.value[parentType] ?? 'hsl(0, 0%, 50%)'
+      colorMap[typeName] = parentTypeColorMap.value[parentType] ?? defaultColor
     }
 
     return colorMap
   })
 
   /**
-   * Get the color for a component type by name
+   * Get the color info for a component type by name
    * Falls back to a default gray if not found
    */
-  function getComponentTypeColor(typeName: string): string {
-    return componentTypeColorMap.value[typeName] ?? 'hsl(0, 0%, 50%)'
+  function getComponentTypeColor(typeName: string): ColorInfo {
+    return componentTypeColorMap.value[typeName] ?? { bg: '#808080', fg: '#ffffff', textured: false }
   }
 
   /**

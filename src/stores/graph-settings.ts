@@ -22,8 +22,6 @@ interface GraphSettingsState {
   shortestPathAnchorNode: string | null
   visibleNodeIds: string[] | null // null = show all, array = filter to these IDs
   isSidebarExpanded: boolean
-  /** Color blind mode for users with red-green color weakness */
-  colorBlindMode: boolean
 }
 
 const DEFAULT_STATE: GraphSettingsState = {
@@ -37,7 +35,6 @@ const DEFAULT_STATE: GraphSettingsState = {
   shortestPathAnchorNode: null,
   visibleNodeIds: null, // null = show all, array = filter to these IDs
   isSidebarExpanded: true, // Sidebar opened by default
-  colorBlindMode: false, // Color blind mode for red-green weakness
 }
 
 export const useGraphSettingsStore = defineStore('graph-settings', () => {
@@ -102,12 +99,6 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     set: val => state.value.isSidebarExpanded = val,
   })
 
-  // Color blind mode for users with red-green color weakness
-  const colorBlindMode = computed({
-    get: () => state.value.colorBlindMode,
-    set: val => state.value.colorBlindMode = val,
-  })
-
   // Helper to set visible node IDs (for "Hide unselected nodes" feature)
   function setVisibleNodeIds(nodeIds: string[] | null): void {
     state.value.visibleNodeIds = nodeIds
@@ -164,7 +155,6 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     shortestPathAnchorNode,
     visibleNodeIds,
     isSidebarExpanded,
-    colorBlindMode,
     searchQuery,
     isSearchOpen,
     // Computed

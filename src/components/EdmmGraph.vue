@@ -296,12 +296,16 @@ const displayNodes = computed<Node[]>(() => {
       classes.push('edmm-node--highlighted')
 
     // Add type-based color if COLOR mode is enabled
-    const typeColor = settingsStore.typeDifferentiationMode === 'COLOR' && node.data?.type
+    const typeColorInfo = settingsStore.typeDifferentiationMode === 'COLOR' && node.data?.type
       ? graphStore.getComponentTypeColor(node.data.type)
       : undefined
 
-    if (typeColor)
+    if (typeColorInfo)
       classes.push('edmm-node--type-colored')
+
+    // Add textured class if the type uses a textured pattern (overflow beyond palette)
+    if (typeColorInfo?.textured)
+      classes.push('edmm-node--textured')
 
     // Add type-based shape if SHAPE mode is enabled and available
     const nodeShape = settingsStore.typeDifferentiationMode === 'SHAPE'
@@ -313,9 +317,13 @@ const displayNodes = computed<Node[]>(() => {
     if (nodeShape)
       classes.push(`edmm-node--shape-${nodeShape}`)
 
-    // Merge type color CSS variable with existing node style (preserving dimensions)
-    const mergedStyle = typeColor
-      ? { ...node.style, '--type-color': typeColor }
+    // Merge type color CSS variables with existing node style (preserving dimensions)
+    const mergedStyle = typeColorInfo
+      ? {
+          ...node.style,
+          '--type-color': typeColorInfo.bg,
+          '--type-fg': typeColorInfo.fg,
+        }
       : node.style
 
     return {
@@ -324,7 +332,7 @@ const displayNodes = computed<Node[]>(() => {
       style: mergedStyle,
       data: {
         ...node.data,
-        typeColor,
+        typeColorInfo,
         shape: nodeShape,
       },
     }
@@ -629,12 +637,25 @@ function closeInfoPanel() {
 .vue-flow__node.edmm-node.edmm-node--type-colored {
   background: linear-gradient(
     to bottom,
-    color-mix(in oklch, var(--type-color) 20%, white),
-    color-mix(in oklch, var(--type-color) 50%, white)
+    color-mix(in oklch, var(--type-color) 40%, white),
+    color-mix(in oklch, var(--type-color) 90%, white)
   ) !important;
   border-color: var(--type-color) !important;
-  --node-foreground: black !important;
+  --node-foreground: var(--type-fg, black) !important;
   --node-background: white !important;
+}
+
+/* Textured variant for overflow types (6th+ type uses dot pattern) */
+.vue-flow__node.edmm-node.edmm-node--type-colored.edmm-node--textured {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 2px, transparent 2px),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--type-color) 40%, white),
+      color-mix(in oklch, var(--type-color) 90%, white)
+    ) !important;
+  background-size:
+    10px 10px,
+    100% 100% !important;
 }
 
 /* ===========================================

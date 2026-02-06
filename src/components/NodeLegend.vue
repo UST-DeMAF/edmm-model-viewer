@@ -22,12 +22,16 @@ const legendItems = computed(() => {
   }
 
   if (typeDifferentiationMode.value === 'COLOR') {
-    return parentTypes.map(typeName => ({
-      type: typeName,
-      label: toHumanReadable(typeName),
-      color: parentTypeColorMap.value[typeName] ?? 'hsl(0, 0%, 50%)',
-      shape: null as NodeShape | null,
-    }))
+    return parentTypes.map((typeName) => {
+      const colorInfo = parentTypeColorMap.value[typeName]
+      return {
+        type: typeName,
+        label: toHumanReadable(typeName),
+        color: colorInfo?.bg ?? '#808080',
+        textured: colorInfo?.textured ?? false,
+        shape: null as NodeShape | null,
+      }
+    })
   }
 
   if (typeDifferentiationMode.value === 'SHAPE' && isShapeModeAvailable.value) {
@@ -35,6 +39,7 @@ const legendItems = computed(() => {
       type: typeName,
       label: toHumanReadable(typeName),
       color: null as string | null,
+      textured: false,
       shape: parentTypeShapeMap.value[typeName] ?? 'rectangle',
     }))
   }
@@ -70,12 +75,28 @@ function getShapeIcon(shape: NodeShape | null): string {
       return 'i-lucide-square'
   }
 }
+
+// Get the style object for a color legend item (with optional dot pattern for textured items)
+function getColorStyle(item: { color: string | null, textured: boolean }): Record<string, string> {
+  if (!item.color) {
+    return {}
+  }
+
+  if (item.textured) {
+    return {
+      background: `radial-gradient(circle, rgba(255,255,255,0.5) 1.5px, transparent 1.5px), ${item.color}`,
+      backgroundSize: '6px 6px, 100% 100%',
+    }
+  }
+
+  return { backgroundColor: item.color }
+}
 </script>
 
 <template>
   <div
     v-if="showLegend"
-    class="select-none rounded-lg bg-background/90 p-2 text-sm backdrop-blur"
+    class="text-sm p-2 rounded-lg bg-background/90 select-none backdrop-blur"
   >
     <p class="font-medium tracking-wide my-1 ms-1 opacity-60">
       {{ typeDifferentiationMode === 'COLOR' ? 'Node Colors' : 'Node Shapes' }}
@@ -90,14 +111,14 @@ function getShapeIcon(shape: NodeShape | null): string {
         <!-- Color indicator (for COLOR mode) -->
         <div
           v-if="item.color"
-          class="h-3 w-3 shrink-0 rounded-sm border border-black/20"
-          :style="{ backgroundColor: item.color }"
+          class="border border-black/20 rounded-sm shrink-0 h-5 w-7"
+          :style="getColorStyle(item)"
         />
 
         <!-- Shape indicator (for SHAPE mode) -->
         <i
           v-if="item.shape"
-          class="shrink-0 size-4 opacity-80"
+          class="opacity-80 shrink-0 size-4"
           :class="getShapeIcon(item.shape)"
         />
 
