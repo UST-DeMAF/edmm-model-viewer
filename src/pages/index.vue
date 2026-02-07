@@ -176,7 +176,7 @@ onMounted(async () => {
           <img src="@/assets/images/edmm.png" alt="EDMM Logo" class="size-20">
         </div>
         <h2 class="text-2xl text-foreground font-bold">
-          DeMAF Web UI
+          EDMM Model Viewer
         </h2>
         <p class="text-muted-foreground">
           Transform and visualize deployment models using the Essential Deployment Metamodel. Get started by transforming a model or opening a local file.

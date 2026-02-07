@@ -11,6 +11,7 @@ import NodeTypeFilter from './NodeTypeFilter.vue'
 import { Button } from './ui/button'
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -35,7 +36,7 @@ const graphStore = useGraphStore()
 // Register interaction mode keyboard shortcuts
 useInteractionModeKeybinds()
 
-const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, typeDifferentiationMode, isSidebarExpanded: isExpanded } = storeToRefs(store)
+const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, typeDifferentiationMode, isSidebarExpanded: isExpanded, showEdgeLabels } = storeToRefs(store)
 const { visibleNodeTypes } = storeToRefs(graphStore)
 
 function openSearch() {
@@ -148,6 +149,15 @@ onKeyStroke('Alt', (e) => {
               </span>
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuCheckboxItem
+            v-model="showEdgeLabels"
+            @select.prevent
+          >
+            <span class="inline-flex gap-2 items-center">
+              Show Edge Labels
+            </span>
+          </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <DropdownMenu>

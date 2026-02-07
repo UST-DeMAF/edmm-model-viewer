@@ -5,7 +5,7 @@ import TooltipProvider from './components/ui/tooltip/TooltipProvider.vue'
 // you can use this to manipulate the document head in any components,
 // they will be rendered correctly in the html results with vite-ssg
 useHead({
-  title: 'DeMAF Web UI',
+  title: 'EDMM Model Viewer',
   meta: [
     {
       name: 'description',

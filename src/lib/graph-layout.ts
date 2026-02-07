@@ -15,8 +15,6 @@ export type LayoutAlgorithm = 'default' | 'layered' | 'force' | 'mrtree'
 export interface LayoutConfig {
   interactionMode: 'NORMAL' | 'HIGHLIGHT_DIRECT_SUCCESSORS' | 'HIGHLIGHT_DIRECT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS' | 'SHORTEST_PATH'
   showEdgeLabels: boolean
-  /** Which relation types are hidden (by type name string) */
-  hiddenRelations: string[]
   /** Direction of the graph layout */
   layoutDirection: LayoutDirection
   /** Whether to scale nodes based on their dependency count */
@@ -53,18 +51,18 @@ export function isRelationVisible(relationType: string, hiddenRelations: string[
 }
 
 /**
- * Compute edges based on config
+ * Compute edges based on config and hidden relations
  */
 export function computeEdges(
   model: EdmmDeploymentModel,
-  config: LayoutConfig,
+  hiddenRelations: string[],
 ): EdgeData[] {
   const collection: EdgeData[] = []
 
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Skip if relation type is not in visible relations list
-      if (!isRelationVisible(relation.type, config.hiddenRelations)) {
+      if (!isRelationVisible(relation.type, hiddenRelations)) {
         return
       }
 
@@ -91,6 +89,7 @@ function runFlatDagreLayout(
   componentIds: string[],
   config: LayoutConfig,
   nodeScales: Map<string, number>,
+  hiddenRelations: string[],
 ): Node[] {
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -124,7 +123,7 @@ function runFlatDagreLayout(
   if (model.relations) {
     Object.values(model.relations).forEach((relation) => {
       // Skip if relation type is not in visible relations list
-      if (!isRelationVisible(relation.type, config.hiddenRelations)) {
+      if (!isRelationVisible(relation.type, hiddenRelations)) {
         return
       }
 
@@ -179,12 +178,13 @@ function runFlatDagreLayout(
 function computeNodeScales(
   model: EdmmDeploymentModel,
   config: LayoutConfig,
+  hiddenRelations: string[],
 ): Map<string, number> {
   if (!config.scaleWithDependencies) {
     return new Map()
   }
 
-  const counts = computeDependentCounts(model, config.hiddenRelations)
+  const counts = computeDependentCounts(model, hiddenRelations)
   const maxCount = Math.max(...counts.values(), 1)
 
   const scaleFactors = new Map<string, number>()
@@ -204,10 +204,11 @@ function computeNodeScales(
 export function runDagreLayout(
   model: EdmmDeploymentModel,
   config: LayoutConfig,
+  hiddenRelations: string[],
 ): Node[] {
   const componentIds = Object.keys(model.components)
-  const nodeScales = computeNodeScales(model, config)
-  return runFlatDagreLayout(model, componentIds, config, nodeScales)
+  const nodeScales = computeNodeScales(model, config, hiddenRelations)
+  return runFlatDagreLayout(model, componentIds, config, nodeScales, hiddenRelations)
 }
 
 /**
@@ -217,6 +218,7 @@ async function runElkLayout(
   model: EdmmDeploymentModel,
   config: LayoutConfig,
   nodeScales: Map<string, number>,
+  hiddenRelations: string[],
 ): Promise<Node[]> {
   const elk = new ELK()
   const componentIds = Object.keys(model.components)
@@ -234,7 +236,7 @@ async function runElkLayout(
   if (model.relations) {
     Object.entries(model.relations).forEach(([relationId, relation]) => {
       // Skip if relation type is not in visible relations list
-      if (!isRelationVisible(relation.type, config.hiddenRelations)) {
+      if (!isRelationVisible(relation.type, hiddenRelations)) {
         return
       }
 
@@ -334,20 +336,21 @@ async function runElkLayout(
 export async function computeGraphLayout(
   model: EdmmDeploymentModel,
   config: LayoutConfig,
+  hiddenRelations: string[],
 ): Promise<LayoutResult> {
   let nodes: Node[]
 
   if (config.layoutAlgorithm !== 'default') {
     // Use ELK for layered, force, and mrtree algorithms
-    const nodeScales = computeNodeScales(model, config)
-    nodes = await runElkLayout(model, config, nodeScales)
+    const nodeScales = computeNodeScales(model, config, hiddenRelations)
+    nodes = await runElkLayout(model, config, nodeScales, hiddenRelations)
   }
   else {
     // Default: use dagre
-    nodes = runDagreLayout(model, config)
+    nodes = runDagreLayout(model, config, hiddenRelations)
   }
 
-  const edges = computeEdges(model, config)
+  const edges = computeEdges(model, hiddenRelations)
 
   return { nodes, edges }
 }

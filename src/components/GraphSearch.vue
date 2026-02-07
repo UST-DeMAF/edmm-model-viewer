@@ -24,6 +24,15 @@ function handleClose() {
 // Keyboard handler for escape
 onKeyStroke('Escape', handleClose)
 
+// Keyboard handler for refocusing the input
+onKeyStroke('f', (e) => {
+  const inputEl = inputRef.value?.$el?.querySelector('input') || inputRef.value?.$el
+  if (inputEl && document.activeElement !== inputEl) {
+    e.preventDefault()
+    inputEl.focus()
+  }
+})
+
 // Auto-focus input on mount
 onMounted(async () => {
   await nextTick()
@@ -43,11 +52,11 @@ onMounted(async () => {
           ref="inputRef"
           v-model="settingsStore.searchQuery"
           placeholder="Search nodes..."
-          class="w-64 pl-9"
+          class="pl-9 w-64"
         />
       </div>
 
-      <Button class="shrink-0 px-2" @click="handleClose">
+      <Button class="px-2 shrink-0" @click="handleClose">
         Close <Kbd class="text-foreground">ESC</Kbd>
       </Button>
     </div>

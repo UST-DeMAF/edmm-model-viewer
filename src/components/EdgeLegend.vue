@@ -4,13 +4,10 @@ import { TreeItem, TreeRoot } from 'reka-ui'
 import { Switch } from '~/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '~/components/ui/tooltip'
 import { useGraphStore } from '~/stores/graph'
-import { useGraphSettingsStore } from '~/stores/graph-settings'
 
-const settingsStore = useGraphSettingsStore()
 const graphStore = useGraphStore()
 
-const { hiddenRelations } = storeToRefs(settingsStore)
-const { relationTypes, relationTypesHierarchy } = storeToRefs(graphStore)
+const { hiddenRelations, relationTypes, relationTypesHierarchy } = storeToRefs(graphStore)
 
 function isEdgeTypeVisible(edgeType: string): boolean {
   // Edge is visible if it's NOT in the hidden list

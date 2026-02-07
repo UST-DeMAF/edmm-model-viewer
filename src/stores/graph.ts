@@ -226,24 +226,40 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   /**
+   * Get all unique parent type categories from the model
+   * Only includes parent types where at least one node exists with a type that directly inherits from that parent
+   */
+  const uniqueParentTypes = computed<string[]>(() => {
+    if (!model.value?.component_types || !model.value?.components)
+      return []
+
+    // Get all component types that are actually used by nodes
+    const usedTypes = new Set<string>()
+    for (const component of Object.values(model.value.components)) {
+      if (component.type) {
+        usedTypes.add(component.type)
+      }
+    }
+
+    // Find parent types only for the actually used component types
+    const parentTypes = new Set<string>()
+    for (const typeName of usedTypes) {
+      if (model.value.component_types[typeName]) {
+        const parentType = getDirectParentType(typeName, model.value.component_types)
+        parentTypes.add(parentType)
+      }
+    }
+    return Array.from(parentTypes).sort()
+  })
+
+  /**
    * Map from parent type to its color info
    * Each unique parent type gets a distinct color from the palette
+   * Only includes parent types that have actual nodes using their child types
    */
   const parentTypeColorMap = computed<Record<string, NodeColorInfo>>(() => {
-    if (!model.value?.component_types) {
-      return {}
-    }
-
-    const componentTypes = model.value.component_types
-
-    // Find all unique direct parent types (including types that are their own parent)
-    const parentTypes = new Set<string>()
-    for (const typeName of Object.keys(componentTypes)) {
-      const parentType = getDirectParentType(typeName, componentTypes)
-      parentTypes.add(parentType)
-    }
-
-    const sortedParentTypes = Array.from(parentTypes).sort()
+    // Use uniqueParentTypes which already filters to only parent types with actual nodes
+    const sortedParentTypes = uniqueParentTypes.value
 
     // Create parent type -> color info mapping using NODE_COLORBLIND_PALETTE
     const colorMap: Record<string, NodeColorInfo> = {}
@@ -315,21 +331,6 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   /**
-   * Get all unique parent type categories from the model
-   */
-  const uniqueParentTypes = computed<string[]>(() => {
-    if (!model.value?.component_types)
-      return []
-
-    const parentTypes = new Set<string>()
-    for (const typeName of Object.keys(model.value.component_types)) {
-      const parentType = getDirectParentType(typeName, model.value.component_types)
-      parentTypes.add(parentType)
-    }
-    return Array.from(parentTypes).sort()
-  })
-
-  /**
    * Check if SHAPE mode can be used (≤4 unique parent types)
    */
   const isShapeModeAvailable = computed<boolean>(() => {
@@ -383,6 +384,55 @@ export const useGraphStore = defineStore('graph', () => {
     return componentTypeShapeMap.value[typeName] ?? null
   }
 
+  // =====================================================
+  // Non-persisted state (resets on page reload)
+  // =====================================================
+
+  /** Hidden relation types by name (empty = all visible) */
+  const hiddenRelations = ref<string[]>([])
+
+  /** Shortest path anchor node (null = no anchor selected) */
+  const shortestPathAnchorNode = ref<string | null>(null)
+
+  /** Visible node IDs filter (null = show all, array = filter to these IDs) */
+  const visibleNodeIds = ref<string[] | null>(null)
+
+  /**
+   * Check if a relation type is visible (not hidden)
+   */
+  function isRelationVisible(type: string): boolean {
+    return !hiddenRelations.value.includes(type)
+  }
+
+  /**
+   * Toggle the visibility of a relation type
+   */
+  function toggleRelationVisibility(type: string): void {
+    const index = hiddenRelations.value.indexOf(type)
+    if (index === -1) {
+      // Not hidden yet, add to hidden list
+      hiddenRelations.value = [...hiddenRelations.value, type]
+    }
+    else {
+      // Already hidden, remove from hidden list (make visible)
+      hiddenRelations.value = hiddenRelations.value.filter(t => t !== type)
+    }
+  }
+
+  /**
+   * Set visible node IDs (for "Hide unselected nodes" feature)
+   */
+  function setVisibleNodeIds(nodeIds: string[] | null): void {
+    visibleNodeIds.value = nodeIds
+  }
+
+  /**
+   * Show all nodes (clear the filter)
+   */
+  function showAllNodes(): void {
+    visibleNodeIds.value = null
+  }
+
   return {
     model: readonly(model),
     visibleNodeTypes,
@@ -400,5 +450,14 @@ export const useGraphStore = defineStore('graph', () => {
     getRelationColor,
     getComponentTypeColor,
     getComponentTypeShape,
+    // Non-persisted state
+    hiddenRelations,
+    shortestPathAnchorNode,
+    visibleNodeIds,
+    // Helper functions
+    isRelationVisible,
+    toggleRelationVisibility,
+    setVisibleNodeIds,
+    showAllNodes,
   }
 })

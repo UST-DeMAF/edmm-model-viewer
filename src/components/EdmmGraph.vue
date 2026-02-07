@@ -74,7 +74,7 @@ onNodeClick(({ node }) => {
   // In SHORTEST_PATH mode, clicking sets the anchor node AND opens the info panel
   if (settingsStore.interactionMode === 'SHORTEST_PATH') {
     if (!node.data?.isGroupNode) {
-      settingsStore.shortestPathAnchorNode = node.id
+      graphStore.shortestPathAnchorNode = node.id
       selectedNode.value = node
       selectedEdge.value = null
     }
@@ -103,7 +103,7 @@ onPaneClick(() => {
   selectedEdge.value = null
   // Clear anchor node when clicking on pane in SHORTEST_PATH mode
   if (settingsStore.interactionMode === 'SHORTEST_PATH') {
-    settingsStore.shortestPathAnchorNode = null
+    graphStore.shortestPathAnchorNode = null
   }
 })
 
@@ -113,7 +113,7 @@ function hideUnselectedNodes() {
   const selectedNodes = vueFlow.value?.getSelectedNodes
   if (selectedNodes && selectedNodes.length > 0) {
     const selectedIds = selectedNodes.map((n: Node) => n.id)
-    settingsStore.setVisibleNodeIds(selectedIds)
+    graphStore.setVisibleNodeIds(selectedIds)
   }
 }
 
@@ -125,7 +125,7 @@ const hasSelectedNodes = computed(() => {
 
 // Check if node filter is currently active
 const isNodeFilterActive = computed(() => {
-  return settingsStore.visibleNodeIds !== null && settingsStore.visibleNodeIds.length > 0
+  return graphStore.visibleNodeIds !== null && graphStore.visibleNodeIds.length > 0
 })
 
 // Get the component data for the selected node
@@ -149,11 +149,11 @@ const rawEdges = ref<Array<{ id: string, source: string, target: string, label?:
 
 // Run layout when model or config changes
 watch(
-  [model, () => settingsStore.config],
+  [model, () => settingsStore.config, () => graphStore.hiddenRelations],
   async () => {
     if (!model.value)
       return
-    const result = await computeGraphLayout(model.value, settingsStore.config)
+    const result = await computeGraphLayout(model.value, settingsStore.config, graphStore.hiddenRelations)
     layoutedNodes.value = result.nodes
     rawEdges.value = result.edges
   },
@@ -162,11 +162,11 @@ watch(
 
 // Compute shortest paths from anchor node (for SHORTEST_PATH mode) - forward direction
 const forwardPaths = computed(() => {
-  const anchorNode = settingsStore.shortestPathAnchorNode
+  const anchorNode = graphStore.shortestPathAnchorNode
   if (!anchorNode || settingsStore.interactionMode !== 'SHORTEST_PATH' || !model.value) {
     return new Map<string, { path: string[], edges: string[] }>()
   }
-  return computeShortestPaths(model.value, anchorNode, settingsStore.config.hiddenRelations)
+  return computeShortestPaths(model.value, anchorNode, graphStore.hiddenRelations)
 })
 
 // Compute shortest paths from hovered node (for SHORTEST_PATH mode) - reverse direction
@@ -175,14 +175,14 @@ const reversePaths = computed(() => {
   if (!hoveredNodeId || settingsStore.interactionMode !== 'SHORTEST_PATH' || !model.value) {
     return new Map<string, { path: string[], edges: string[] }>()
   }
-  return computeShortestPaths(model.value, hoveredNodeId, settingsStore.config.hiddenRelations)
+  return computeShortestPaths(model.value, hoveredNodeId, graphStore.hiddenRelations)
 })
 
 // Compute highlighted nodes and edges based on hovered node and interaction mode
 const highlights = computed(() => {
   // Handle SHORTEST_PATH mode separately
   if (settingsStore.interactionMode === 'SHORTEST_PATH') {
-    const anchorNode = settingsStore.shortestPathAnchorNode
+    const anchorNode = graphStore.shortestPathAnchorNode
     if (anchorNode) {
       return computeShortestPathHighlights(
         forwardPaths.value,
@@ -201,7 +201,7 @@ const highlights = computed(() => {
     model.value,
     hoveredNode.value?.id ?? null,
     settingsStore.interactionMode,
-    settingsStore.config.hiddenRelations,
+    graphStore.hiddenRelations,
   )
 })
 
@@ -210,11 +210,11 @@ const displayNodes = computed<Node[]>(() => {
   const isNormalMode = settingsStore.interactionMode === 'NORMAL'
   const isShortestPathMode = settingsStore.interactionMode === 'SHORTEST_PATH'
   // For SHORTEST_PATH mode: hasSelection = anchor node set AND hovering
-  const shortestPathActive = isShortestPathMode && !!settingsStore.shortestPathAnchorNode && !!hoveredNode.value
+  const shortestPathActive = isShortestPathMode && !!graphStore.shortestPathAnchorNode && !!hoveredNode.value
   const hasSelection = (!isNormalMode && !isShortestPathMode && !!hoveredNode.value) || shortestPathActive
 
   // First, apply visible node IDs filter (from "Hide unselected nodes" feature)
-  const visibleNodeIdsFilter = settingsStore.visibleNodeIds
+  const visibleNodeIdsFilter = graphStore.visibleNodeIds
   let filteredNodes = layoutedNodes.value
   if (visibleNodeIdsFilter !== null && visibleNodeIdsFilter.length > 0) {
     const visibleSet = new Set(visibleNodeIdsFilter)
@@ -346,7 +346,7 @@ const displayNodes = computed<Node[]>(() => {
 // Filter by hiddenRelations (display-only filtering, doesn't affect layout)
 const displayEdges = computed<Edge[]>(() => {
   // Get visible node IDs for filtering edges
-  const visibleNodeIdsFilter = settingsStore.visibleNodeIds
+  const visibleNodeIdsFilter = graphStore.visibleNodeIds
   const visibleNodeSet = visibleNodeIdsFilter !== null && visibleNodeIdsFilter.length > 0
     ? new Set(visibleNodeIdsFilter)
     : null
@@ -354,7 +354,7 @@ const displayEdges = computed<Edge[]>(() => {
   // First, filter edges by visible relation types AND visible nodes
   const filteredEdges = rawEdges.value.filter((edge) => {
     // Check if relation type is visible (uses dynamic string-based filtering)
-    const relationVisible = !edge.label || isRelationVisible(edge.label, settingsStore.config.hiddenRelations)
+    const relationVisible = !edge.label || isRelationVisible(edge.label, graphStore.hiddenRelations)
 
     // If we have a visible node filter, only show edges between visible nodes
     if (visibleNodeSet !== null) {
@@ -417,7 +417,7 @@ const displayEdges = computed<Edge[]>(() => {
   })
 
   // For SHORTEST_PATH mode: hasSelection = anchor node set AND hovering
-  const shortestPathActive = isShortestPathMode && !!settingsStore.shortestPathAnchorNode && !!hoveredNode.value
+  const shortestPathActive = isShortestPathMode && !!graphStore.shortestPathAnchorNode && !!hoveredNode.value
   const hasSelection = (!isNormalMode && !isShortestPathMode && !!hoveredNode.value) || shortestPathActive
 
   // Apply highlight logic then merge with filter-based dimming
@@ -482,13 +482,13 @@ function closeInfoPanel() {
             class="py-2 pe-2 ps-3 border border-border rounded-lg bg-background/95 flex gap-3 shadow-lg translate-x-[-50%] items-center left-50% top-3 absolute z-10 backdrop-blur-sm"
           >
             <div class="text-sm text-muted-foreground flex gap-2 items-center">
-              <span>Showing <strong class="text-foreground">{{ settingsStore.visibleNodeIds?.length }}</strong> of <strong class="text-foreground">{{ layoutedNodes.length }}</strong> nodes</span>
+              <span>Showing <strong class="text-foreground">{{ graphStore.visibleNodeIds?.length }}</strong> of <strong class="text-foreground">{{ layoutedNodes.length }}</strong> nodes</span>
             </div>
             <Button
               variant="outline"
               size="sm"
               class="text-xs h-7"
-              @click="settingsStore.showAllNodes()"
+              @click="graphStore.showAllNodes()"
             >
               <EyeIcon class="mr-1 h-3 w-3" />
               Show all
@@ -526,7 +526,7 @@ function closeInfoPanel() {
         <ContextMenuSeparator v-if="isNodeFilterActive" />
         <ContextMenuItem
           v-if="isNodeFilterActive"
-          @click="settingsStore.showAllNodes()"
+          @click="graphStore.showAllNodes()"
         >
           <EyeIcon class="mr-2 h-4 w-4" />
           Show all nodes
