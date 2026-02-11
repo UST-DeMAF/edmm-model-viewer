@@ -13,7 +13,7 @@ export type LayoutDirection = 'vertical' | 'horizontal'
 export type LayoutAlgorithm = 'default' | 'layered' | 'force' | 'mrtree'
 
 export interface LayoutConfig {
-  interactionMode: 'NORMAL' | 'HIGHLIGHT_DIRECT_SUCCESSORS' | 'HIGHLIGHT_DIRECT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS' | 'SHORTEST_PATH'
+  interactionMode: 'NORMAL' | 'HIGHLIGHT_SUCCESSORS' | 'HIGHLIGHT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS' | 'SHORTEST_PATH'
   showEdgeLabels: boolean
   /** Direction of the graph layout */
   layoutDirection: LayoutDirection
@@ -267,7 +267,8 @@ async function runElkLayout(
           ...baseOptions,
           'elk.algorithm': 'mrtree',
           'elk.direction': config.layoutDirection === 'vertical' ? 'DOWN' : 'RIGHT',
-          'elk.spacing.nodeNode': '50',
+          'elk.spacing.nodeNode': '80',
+          'elk.mrtree.spacing.nodeNodeBetweenLayers': '150',
           'elk.mrtree.weighting': 'CONSTRAINT',
         }
       case 'layered':

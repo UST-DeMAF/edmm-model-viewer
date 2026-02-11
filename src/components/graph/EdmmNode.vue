@@ -19,6 +19,7 @@ const props = defineProps<{
     scale?: number
     dependentCount?: number
     shape?: NodeShape
+    distance?: number
   }
 }>()
 defineEmits(['updateNodeInternals'])
@@ -56,6 +57,13 @@ const highlightedLabel = computed(() => {
 </script>
 
 <template>
+  <!-- Distance badge (shown above the node, centered) -->
+  <div
+    v-if="!data.isGroupNode && data.distance != null && data.distance > 0"
+    class="edmm-node__distance"
+  >
+    {{ data.distance }}
+  </div>
   <!-- For group nodes, show label as a header at the top -->
   <div v-if="data.isGroupNode" class="edmm-node__group-header" v-html="highlightedLabel" />
   <!-- For regular nodes, show label centered -->
@@ -154,5 +162,27 @@ const highlightedLabel = computed(() => {
   padding: 0 2px;
   border-radius: 2px;
   font-weight: 600;
+}
+
+/* Distance badge - floats above the node, centered */
+.edmm-node__distance {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  min-width: 30px;
+  font-size: 20px;
+  border-radius: 1000px;
+  font-weight: 700;
+  color: var(--colors-background);
+  background: var(--colors-foreground);
+  pointer-events: none;
+  z-index: 10;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 </style>

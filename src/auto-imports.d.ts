@@ -190,6 +190,7 @@ declare global {
   const useGraphStore: typeof import('./stores/graph')['useGraphStore']
   const useHead: typeof import('@unhead/vue')['useHead']
   const useHeadSafe: typeof import('@unhead/vue')['useHeadSafe']
+  const useHighlightRangeScroll: typeof import('./composables/useHighlightRangeScroll')['useHighlightRangeScroll']
   const useHoveredNode: typeof import('./composables/useHoveredNode')['useHoveredNode']
   const useI18n: typeof import('vue-i18n')['useI18n']
   const useId: typeof import('vue')['useId']
@@ -521,6 +522,7 @@ declare module 'vue' {
     readonly useGraphStore: UnwrapRef<typeof import('./stores/graph')['useGraphStore']>
     readonly useHead: UnwrapRef<typeof import('@unhead/vue')['useHead']>
     readonly useHeadSafe: UnwrapRef<typeof import('@unhead/vue')['useHeadSafe']>
+    readonly useHighlightRangeScroll: UnwrapRef<typeof import('./composables/useHighlightRangeScroll')['useHighlightRangeScroll']>
     readonly useHoveredNode: UnwrapRef<typeof import('./composables/useHoveredNode')['useHoveredNode']>
     readonly useI18n: UnwrapRef<typeof import('vue-i18n')['useI18n']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>

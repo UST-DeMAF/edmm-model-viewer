@@ -3,17 +3,27 @@ import { useGraphSettingsStore } from '~/stores/graph-settings'
 
 const settingsStore = useGraphSettingsStore()
 
-// Map interaction modes to their helper messages
-const helperMessages: Record<string, string> = {
+// Build a label for the current range setting
+const rangeLabel = computed(() => {
+  const range = settingsStore.highlightRange
+  if (range === null)
+    return 'all'
+  if (range === 1)
+    return 'direct'
+  return `within ${range} steps`
+})
+
+// Map interaction modes to their helper messages (dynamic based on range)
+const helperMessages = computed<Record<string, string>>(() => ({
   SHORTEST_PATH: 'Click on a node to select it, then hover over another node to show the shortest path between them',
-  HIGHLIGHT_DIRECT_PREDECESSORS: 'Hover over a node to highlight its direct predecessors',
-  HIGHLIGHT_DIRECT_SUCCESSORS: 'Hover over a node to highlight its direct successors',
-  HIGHLIGHT_NEIGHBOURS: 'Hover over a node to highlight its direct neighbours',
-}
+  HIGHLIGHT_PREDECESSORS: `Hover over a node to highlight ${rangeLabel.value} predecessors`,
+  HIGHLIGHT_SUCCESSORS: `Hover over a node to highlight ${rangeLabel.value} successors`,
+  HIGHLIGHT_NEIGHBOURS: `Hover over a node to highlight ${rangeLabel.value} neighbours`,
+}))
 
 // Computed property that returns the message for the current interaction mode
 const currentHelperMessage = computed(() => {
-  return helperMessages[settingsStore.interactionMode] ?? null
+  return helperMessages.value[settingsStore.interactionMode] ?? null
 })
 </script>
 
@@ -22,9 +32,9 @@ const currentHelperMessage = computed(() => {
     <div
       v-if="currentHelperMessage"
       :key="settingsStore.interactionMode"
-      class="absolute top-3 z-1 flex w-full justify-center text-sm text-foreground"
+      class="text-sm text-foreground flex w-full top-3 justify-center absolute z-1"
     >
-      <div class="text-center max-w-[300px] bg-background/90  backdrop-blur border rounded-lg p-2">
+      <div class="p-2 text-center border rounded-lg bg-background/90 max-w-[300px] backdrop-blur">
         {{ currentHelperMessage }}
       </div>
     </div>

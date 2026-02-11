@@ -43,7 +43,7 @@ onMounted(async () => {
 
 <template>
   <div class="translate-x-[-50%] bottom-8 left-[50%] fixed z-50">
-    <div class="p-2 border rounded-lg bg-popover flex gap-2 shadow-lg items-center">
+    <div class="p-2 border rounded-lg bg-popover flex gap-2 shadow-foreground/20 shadow-md items-center">
       <div class="relative">
         <i
           class="i-lucide-search text-muted-foreground size-4 pointer-events-none translate-y-[-50%] left-3 top-[50%] absolute"

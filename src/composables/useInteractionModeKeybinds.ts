@@ -15,48 +15,48 @@ import { useGraphSettingsStore } from '~/stores/graph-settings'
  * Check if the currently focused element is an input field.
  */
 function isInputFocused(): boolean {
-    const activeElement = document.activeElement
-    if (!activeElement)
-        return false
+  const activeElement = document.activeElement
+  if (!activeElement)
+    return false
 
-    const tagName = activeElement.tagName.toLowerCase()
-    return (
-        tagName === 'input'
-        || tagName === 'textarea'
-        || activeElement.hasAttribute('contenteditable')
-    )
+  const tagName = activeElement.tagName.toLowerCase()
+  return (
+    tagName === 'input'
+    || tagName === 'textarea'
+    || activeElement.hasAttribute('contenteditable')
+  )
 }
 
 export function useInteractionModeKeybinds() {
-    const store = useGraphSettingsStore()
+  const store = useGraphSettingsStore()
 
-    onKeyStroke('n', () => {
-        if (isInputFocused())
-            return
-        store.interactionMode = 'NORMAL'
-    })
+  onKeyStroke('n', () => {
+    if (isInputFocused())
+      return
+    store.interactionMode = 'NORMAL'
+  })
 
-    onKeyStroke('s', () => {
-        if (isInputFocused())
-            return
-        store.interactionMode = 'HIGHLIGHT_DIRECT_SUCCESSORS'
-    })
+  onKeyStroke('s', () => {
+    if (isInputFocused())
+      return
+    store.interactionMode = 'HIGHLIGHT_SUCCESSORS'
+  })
 
-    onKeyStroke('p', () => {
-        if (isInputFocused())
-            return
-        store.interactionMode = 'HIGHLIGHT_DIRECT_PREDECESSORS'
-    })
+  onKeyStroke('p', () => {
+    if (isInputFocused())
+      return
+    store.interactionMode = 'HIGHLIGHT_PREDECESSORS'
+  })
 
-    onKeyStroke('b', () => {
-        if (isInputFocused())
-            return
-        store.interactionMode = 'HIGHLIGHT_NEIGHBOURS'
-    })
+  onKeyStroke('b', () => {
+    if (isInputFocused())
+      return
+    store.interactionMode = 'HIGHLIGHT_NEIGHBOURS'
+  })
 
-    onKeyStroke('r', () => {
-        if (isInputFocused())
-            return
-        store.interactionMode = 'SHORTEST_PATH'
-    })
+  onKeyStroke('r', () => {
+    if (isInputFocused())
+      return
+    store.interactionMode = 'SHORTEST_PATH'
+  })
 }

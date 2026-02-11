@@ -68,7 +68,7 @@ const hoveredEdgeId = ref<string | null>(null)
 // Use the graph settings store
 const settingsStore = useGraphSettingsStore()
 
-const { onNodeClick, onEdgeClick, onPaneClick } = useVueFlow()
+const { onNodeClick, onEdgeClick, onPaneClick, updateNode } = useVueFlow()
 
 onNodeClick(({ node }) => {
   // In SHORTEST_PATH mode, clicking sets the anchor node AND opens the info panel
@@ -156,6 +156,13 @@ watch(
     const result = await computeGraphLayout(model.value, settingsStore.config, graphStore.hiddenRelations)
     layoutedNodes.value = result.nodes
     rawEdges.value = result.edges
+
+    // Programmatically push updated positions into VueFlow's internal state.
+    // Without this, VueFlow keeps its cached positions and nodes only visually
+    // move on hover (when the individual node component re-renders).
+    for (const node of result.nodes) {
+      updateNode(node.id, { position: node.position, style: node.style })
+    }
   },
   { immediate: true, deep: true },
 )
@@ -191,17 +198,18 @@ const highlights = computed(() => {
         anchorNode,
       )
     }
-    return { highlightedNodeIds: new Set<string>(), highlightedEdgeIds: new Set<string>() }
+    return { highlightedNodeIds: new Set<string>(), highlightedEdgeIds: new Set<string>(), nodeDistances: new Map<string, number>() }
   }
 
   if (!model.value) {
-    return { highlightedNodeIds: new Set<string>(), highlightedEdgeIds: new Set<string>() }
+    return { highlightedNodeIds: new Set<string>(), highlightedEdgeIds: new Set<string>(), nodeDistances: new Map<string, number>() }
   }
   return computeHighlights(
     model.value,
     hoveredNode.value?.id ?? null,
     settingsStore.interactionMode,
     graphStore.hiddenRelations,
+    settingsStore.highlightRange,
   )
 })
 
@@ -226,6 +234,18 @@ const displayNodes = computed<Node[]>(() => {
     highlights.value.highlightedNodeIds,
     hasSelection,
   )
+
+  // Inject BFS distance into node data (for distance badge display)
+  const distances = highlights.value.nodeDistances
+  if (hasSelection && distances.size > 0) {
+    nodes = nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        distance: distances.get(node.id) ?? undefined,
+      },
+    }))
+  }
 
   // Check if search is active (search panel is open)
   const isSearchActive = settingsStore.isSearchOpen

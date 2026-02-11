@@ -5,9 +5,10 @@ import { isRelationVisible } from '~/lib/graph-layout'
 
 export type InteractionMode = LayoutConfig['interactionMode']
 
-interface HighlightResult {
+export interface HighlightResult {
   highlightedNodeIds: Set<string>
   highlightedEdgeIds: Set<string>
+  nodeDistances: Map<string, number>
 }
 
 /**
@@ -20,10 +21,10 @@ export function buildDependencyGraph(
   model: EdmmDeploymentModel,
   hiddenRelations: string[],
 ): {
-  dependencies: Map<string, Set<string>>
-  dependents: Map<string, Set<string>>
-  edgeMap: Map<string, { source: string, target: string, id: string }>
-} {
+    dependencies: Map<string, Set<string>>
+    dependents: Map<string, Set<string>>
+    edgeMap: Map<string, { source: string, target: string, id: string }>
+  } {
   const dependencies = new Map<string, Set<string>>()
   const dependents = new Map<string, Set<string>>()
   const edgeMap = new Map<string, { source: string, target: string, id: string }>()
@@ -112,6 +113,82 @@ export function computeDependentCounts(
   return counts
 }
 
+interface AdjacencyEntry {
+  neighbor: string
+  edgeId: string
+}
+
+/**
+ * Collect all nodes reachable within a given number of steps using BFS.
+ * Also tracks which edges were actually traversed during the BFS.
+ * @param startNodeId - The node to start from
+ * @param adjacency - Edge-aware adjacency map
+ * @param range - Max number of steps (1 = direct only, null = unlimited)
+ * @returns nodes: Set of reachable node IDs, edges: Set of edge IDs used during traversal, distances: Map of nodeId to BFS depth
+ */
+function collectNodesWithinRange(
+  startNodeId: string,
+  adjacency: Map<string, AdjacencyEntry[]>,
+  range: number | null,
+): { nodes: Set<string>, edges: Set<string>, distances: Map<string, number> } {
+  const resultNodes = new Set<string>()
+  const resultEdges = new Set<string>()
+  const distances = new Map<string, number>()
+  const visited = new Set<string>([startNodeId])
+  const queue: Array<{ nodeId: string, depth: number }> = [{ nodeId: startNodeId, depth: 0 }]
+
+  while (queue.length > 0) {
+    const { nodeId, depth } = queue.shift()!
+
+    // If range is set and we've reached the max depth, don't explore further
+    if (range !== null && depth >= range) {
+      continue
+    }
+
+    const neighbors = adjacency.get(nodeId) || []
+    for (const { neighbor, edgeId } of neighbors) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor)
+        resultNodes.add(neighbor)
+        resultEdges.add(edgeId)
+        distances.set(neighbor, depth + 1)
+        queue.push({ nodeId: neighbor, depth: depth + 1 })
+      }
+    }
+  }
+
+  return { nodes: resultNodes, edges: resultEdges, distances }
+}
+
+/**
+ * Build edge-aware adjacency maps for BFS traversal.
+ * - successorAdj: nodeId -> [{neighbor: dependency target, edgeId}]
+ * - predecessorAdj: nodeId -> [{neighbor: dependent source, edgeId}]
+ */
+function buildEdgeAwareAdjacency(
+  edgeMap: Map<string, { source: string, target: string, id: string }>,
+): {
+    successorAdj: Map<string, AdjacencyEntry[]>
+    predecessorAdj: Map<string, AdjacencyEntry[]>
+  } {
+  const successorAdj = new Map<string, AdjacencyEntry[]>()
+  const predecessorAdj = new Map<string, AdjacencyEntry[]>()
+
+  edgeMap.forEach((edge, edgeId) => {
+    // Successor direction: source -> target (following dependency direction)
+    if (!successorAdj.has(edge.source))
+      successorAdj.set(edge.source, [])
+    successorAdj.get(edge.source)!.push({ neighbor: edge.target, edgeId })
+
+    // Predecessor direction: target -> source (reverse dependency direction)
+    if (!predecessorAdj.has(edge.target))
+      predecessorAdj.set(edge.target, [])
+    predecessorAdj.get(edge.target)!.push({ neighbor: edge.source, edgeId })
+  })
+
+  return { successorAdj, predecessorAdj }
+}
+
 /**
  * Compute which nodes and edges should be highlighted based on the selected node
  * and the current interaction mode.
@@ -121,79 +198,66 @@ export function computeHighlights(
   selectedNodeId: string | null,
   interactionMode: InteractionMode,
   hiddenRelations: string[],
+  range: number | null = 1,
 ): HighlightResult {
   const highlightedNodeIds = new Set<string>()
   const highlightedEdgeIds = new Set<string>()
+  const nodeDistances = new Map<string, number>()
 
   if (!selectedNodeId) {
-    return { highlightedNodeIds, highlightedEdgeIds }
+    return { highlightedNodeIds, highlightedEdgeIds, nodeDistances }
   }
 
-  const { dependencies, dependents, edgeMap } = buildDependencyGraph(model, hiddenRelations)
+  const { edgeMap } = buildDependencyGraph(model, hiddenRelations)
+  const { successorAdj, predecessorAdj } = buildEdgeAwareAdjacency(edgeMap)
 
   // Always highlight the selected node
   highlightedNodeIds.add(selectedNodeId)
 
-  let targetNodeIds: Set<string>
+  let bfsResult: { nodes: Set<string>, edges: Set<string>, distances: Map<string, number> }
 
   switch (interactionMode) {
-    case 'HIGHLIGHT_DIRECT_SUCCESSORS':
-      // Nodes that the selected node directly depends on (successors)
-      targetNodeIds = dependencies.get(selectedNodeId) || new Set()
+    case 'HIGHLIGHT_SUCCESSORS':
+      // Nodes that the selected node depends on (successors), within range
+      bfsResult = collectNodesWithinRange(selectedNodeId, successorAdj, range)
       break
 
-    case 'HIGHLIGHT_DIRECT_PREDECESSORS':
-      // Nodes that directly depend on the selected node (predecessors)
-      targetNodeIds = dependents.get(selectedNodeId) || new Set()
+    case 'HIGHLIGHT_PREDECESSORS':
+      // Nodes that depend on the selected node (predecessors), within range
+      bfsResult = collectNodesWithinRange(selectedNodeId, predecessorAdj, range)
       break
 
     case 'HIGHLIGHT_NEIGHBOURS': {
-      // Both direct predecessors (dependencies) and direct successors (dependents)
-      const directDeps = dependencies.get(selectedNodeId) || new Set()
-      const directDependents = dependents.get(selectedNodeId) || new Set()
-      targetNodeIds = new Set([...directDeps, ...directDependents])
+      // Both predecessors and successors within range
+      const successorResult = collectNodesWithinRange(selectedNodeId, successorAdj, range)
+      const predecessorResult = collectNodesWithinRange(selectedNodeId, predecessorAdj, range)
+      const mergedDistances = new Map<string, number>()
+      successorResult.distances.forEach((d, id) => mergedDistances.set(id, d))
+      predecessorResult.distances.forEach((d, id) => {
+        const existing = mergedDistances.get(id)
+        if (existing === undefined || d < existing)
+          mergedDistances.set(id, d)
+      })
+      bfsResult = {
+        nodes: new Set([...successorResult.nodes, ...predecessorResult.nodes]),
+        edges: new Set([...successorResult.edges, ...predecessorResult.edges]),
+        distances: mergedDistances,
+      }
       break
     }
 
     default:
-      targetNodeIds = new Set()
+      bfsResult = { nodes: new Set(), edges: new Set(), distances: new Map() }
   }
 
-  // Add target nodes to highlighted set
-  targetNodeIds.forEach(id => highlightedNodeIds.add(id))
+  // Add BFS-discovered nodes, edges, and distances to result
+  bfsResult.nodes.forEach(id => highlightedNodeIds.add(id))
+  bfsResult.edges.forEach(id => highlightedEdgeIds.add(id))
+  bfsResult.distances.forEach((d, id) => nodeDistances.set(id, d))
+  // Start node has distance 0
+  nodeDistances.set(selectedNodeId, 0)
 
-  // Find edges based on interaction mode
-  // For DIRECT modes: only edges directly connected to the selected node
-  // For ALL modes: edges along the dependency/descendant chain
-  edgeMap.forEach((edge, edgeId) => {
-    switch (interactionMode) {
-      case 'HIGHLIGHT_DIRECT_SUCCESSORS':
-        // Only edges FROM the selected node TO its direct successors
-        if (edge.source === selectedNodeId && targetNodeIds.has(edge.target)) {
-          highlightedEdgeIds.add(edgeId)
-        }
-        break
-
-      case 'HIGHLIGHT_DIRECT_PREDECESSORS':
-        // Only edges FROM direct predecessors TO the selected node
-        if (targetNodeIds.has(edge.source) && edge.target === selectedNodeId) {
-          highlightedEdgeIds.add(edgeId)
-        }
-        break
-
-      case 'HIGHLIGHT_NEIGHBOURS':
-        // Edges directly connected to the selected node in either direction
-        if (edge.source === selectedNodeId && targetNodeIds.has(edge.target)) {
-          highlightedEdgeIds.add(edgeId)
-        }
-        if (edge.target === selectedNodeId && targetNodeIds.has(edge.source)) {
-          highlightedEdgeIds.add(edgeId)
-        }
-        break
-    }
-  })
-
-  return { highlightedNodeIds, highlightedEdgeIds }
+  return { highlightedNodeIds, highlightedEdgeIds, nodeDistances }
 }
 
 /**
@@ -336,5 +400,5 @@ export function computeShortestPathHighlights(
     }
   }
 
-  return { highlightedNodeIds, highlightedEdgeIds }
+  return { highlightedNodeIds, highlightedEdgeIds, nodeDistances: new Map() }
 }

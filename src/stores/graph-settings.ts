@@ -18,6 +18,7 @@ interface GraphSettingsState {
   scaleWithDependencies: boolean
   typeDifferentiationMode: TypeDifferentiationMode
   isSidebarExpanded: boolean
+  highlightRange: number | null // 1-5 or null (unlimited)
 }
 
 const DEFAULT_STATE: GraphSettingsState = {
@@ -28,6 +29,7 @@ const DEFAULT_STATE: GraphSettingsState = {
   scaleWithDependencies: false,
   typeDifferentiationMode: 'COLOR',
   isSidebarExpanded: true, // Sidebar opened by default
+  highlightRange: 1, // default: direct only (1 step)
 }
 
 export const useGraphSettingsStore = defineStore('graph-settings', () => {
@@ -75,6 +77,12 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     set: val => state.value.isSidebarExpanded = val,
   })
 
+  // Highlight range: 1-5 or null (unlimited)
+  const highlightRange = computed({
+    get: () => state.value.highlightRange,
+    set: val => state.value.highlightRange = val,
+  })
+
   // Computed config for use in graph layout
   const config = computed<LayoutConfig>(() => ({
     interactionMode: interactionMode.value,
@@ -99,6 +107,7 @@ export const useGraphSettingsStore = defineStore('graph-settings', () => {
     scaleWithDependencies,
     typeDifferentiationMode,
     isSidebarExpanded,
+    highlightRange,
     searchQuery,
     isSearchOpen,
     // Computed

@@ -33,10 +33,16 @@ const emit = defineEmits<{
 const store = useGraphSettingsStore()
 const graphStore = useGraphStore()
 
-// Register interaction mode keyboard shortcuts
+// Register interaction mode keyboard shortcuts and scroll-based range control
 useInteractionModeKeybinds()
+useHighlightRangeScroll()
 
-const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, typeDifferentiationMode, isSidebarExpanded: isExpanded, showEdgeLabels } = storeToRefs(store)
+const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, typeDifferentiationMode, isSidebarExpanded: isExpanded, showEdgeLabels, highlightRange } = storeToRefs(store)
+
+// Whether the current interaction mode is one of the highlighting modes (successors, predecessors, neighbours)
+const isHighlightMode = computed(() => {
+  return ['HIGHLIGHT_SUCCESSORS', 'HIGHLIGHT_PREDECESSORS', 'HIGHLIGHT_NEIGHBOURS'].includes(interactionMode.value)
+})
 const { visibleNodeTypes } = storeToRefs(graphStore)
 
 function openSearch() {
@@ -227,9 +233,9 @@ onKeyStroke('Alt', (e) => {
       <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
           <Button
-            :variant="interactionMode === 'HIGHLIGHT_DIRECT_SUCCESSORS' ? 'default' : 'ghost'"
+            :variant="interactionMode === 'HIGHLIGHT_SUCCESSORS' ? 'default' : 'ghost'"
             class="p-2 gap-2 w-full justify-start"
-            @click="interactionMode = 'HIGHLIGHT_DIRECT_SUCCESSORS'"
+            @click="interactionMode = 'HIGHLIGHT_SUCCESSORS'"
           >
             <i class="i-lucide-arrow-right-to-line shrink-0 size-5" />
             <template v-if="isExpanded">
@@ -246,9 +252,9 @@ onKeyStroke('Alt', (e) => {
       <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
           <Button
-            :variant="interactionMode === 'HIGHLIGHT_DIRECT_PREDECESSORS' ? 'default' : 'ghost'"
+            :variant="interactionMode === 'HIGHLIGHT_PREDECESSORS' ? 'default' : 'ghost'"
             class="p-2 gap-2 w-full justify-start"
-            @click="interactionMode = 'HIGHLIGHT_DIRECT_PREDECESSORS'"
+            @click="interactionMode = 'HIGHLIGHT_PREDECESSORS'"
           >
             <i class="i-lucide-arrow-left-to-line shrink-0 size-5" />
             <template v-if="isExpanded">
@@ -281,6 +287,32 @@ onKeyStroke('Alt', (e) => {
           Highlight Neighbours
         </TooltipContent>
       </Tooltip>
+      <div v-if="isHighlightMode && isExpanded" class="px-1 w-full">
+        <p class="text-xs text-muted-foreground mb-2 flex items-center justify-between">
+          <span class="whitespace-nowrap">Highlight Range</span>
+          <Kbd class="text-[0.6rem] mt-1 whitespace-nowrap">Shift + Scroll</Kbd>
+        </p>
+        <div class="flex gap-0.5">
+          <Button
+            v-for="n in [1, 2, 3, 4, 5]"
+            :key="n"
+            :variant="highlightRange === n ? 'default' : 'outline'"
+            size="sm"
+            class="text-xs p-0 flex-1 h-6"
+            @click="highlightRange = n"
+          >
+            {{ n }}
+          </Button>
+          <Button
+            :variant="highlightRange === null ? 'default' : 'outline'"
+            size="sm"
+            class="text-xs p-0 flex-1 h-6"
+            @click="highlightRange = null"
+          >
+            ∞
+          </Button>
+        </div>
+      </div>
       <Tooltip :open="showTooltips && !isExpanded">
         <TooltipTrigger as-child>
           <Button
