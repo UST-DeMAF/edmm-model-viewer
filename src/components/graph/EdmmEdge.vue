@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@vue-flow/core'
 import { computed } from 'vue'
+import { hasMetadata } from '~/lib/graph-metadata'
 import { useGraphStore } from '~/stores/graph'
 import EdmmMarker from './EdmmMarker.vue'
 
@@ -43,19 +44,11 @@ const path = computed(() => {
   return { edgePath, labelX, labelY }
 })
 
-// Check if edge has metadata that makes it hoverable
-const hasMetadata = computed(() => {
-  const desc = props.data?.description
-  const propsCount = props.data?.properties ? Object.keys(props.data.properties).length : 0
-  const opsCount = props.data?.operations ? Object.keys(props.data.operations).length : 0
-  return (desc !== null && desc !== undefined && desc !== '') || propsCount > 0 || opsCount > 0
-})
-
 const edgeClasses = computed(() => ({
   'edmm-edge': true,
   'edmm-edge--highlighted': props.data?.highlighted,
   'edmm-edge--dimmed': props.data?.dimmed,
-  'edmm-edge--hoverable': hasMetadata.value,
+  'edmm-edge--hoverable': hasMetadata(props.data),
 }))
 
 // Edge color based on relation type and state, using colors from store
@@ -72,15 +65,15 @@ const edgeColor = computed(() => {
 const markerId = computed(() => `marker-${props.id}`)
 
 const edgeStyle = computed(() => {
-  const isHovered = props.data?.hovered && hasMetadata.value
+  const isHovered = props.data?.hovered && hasMetadata(props.data)
   const baseStyle: Record<string, any> = {
     strokeWidth: props.data?.highlighted ? 3 : (isHovered ? 3 : 2),
     stroke: edgeColor.value,
     transition: 'all 0.2s ease',
     opacity: props.data?.dimmed ? 0.3 : 1,
     // Enable pointer events for hoverable edges
-    pointerEvents: hasMetadata.value ? 'auto' : 'none',
-    cursor: hasMetadata.value ? 'pointer' : 'default',
+    pointerEvents: hasMetadata(props.data) ? 'auto' : 'none',
+    cursor: hasMetadata(props.data) ? 'pointer' : 'default',
     ...props.style,
   }
   // Apply glow filter when hovered
@@ -103,7 +96,7 @@ const labelClasses = computed(() => ({
 
   <!-- Invisible hover path with larger stroke for easier interaction -->
   <path
-    v-if="hasMetadata"
+    v-if="hasMetadata(data)"
     :d="path.edgePath"
     class="edmm-edge__hover-zone"
     fill="none"

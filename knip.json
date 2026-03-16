@@ -1,0 +1,4 @@
+{
+  "entry": ["src/main.ts", "src/App.vue", "src/auto-imports.d.ts", "src/components.d.ts"],
+  "project": ["src/**/*.{ts,vue}"]
+}

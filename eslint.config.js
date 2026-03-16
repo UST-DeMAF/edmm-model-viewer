@@ -7,4 +7,10 @@ export default antfu(
     formatters: true,
     pnpm: true,
   },
+  {
+    rules: {
+      'indent': 'off',
+      'style/indent': 'off',
+    },
+  },
 )

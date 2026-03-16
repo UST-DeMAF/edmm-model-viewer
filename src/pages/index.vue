@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { EdmmDeploymentModel } from '~/lib/io'
 import { AlertCircle, FileText, Upload } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import TransformDialog from '~/components/dialogs/TransformDialog.vue'
@@ -14,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { parseAndValidateEdmm } from '~/lib/io'
 import { useGraphStore } from '~/stores/graph'
 import { useTransformationStore } from '~/stores/transformations'
 
@@ -27,23 +25,19 @@ const initialViewMode: ViewMode = import.meta.env.VITE_APP_USE_TEST_YAML ? 'loca
 const viewMode = ref<ViewMode>(initialViewMode)
 
 // Local file state
-const localModel = ref<EdmmDeploymentModel | null>(null)
 const localFileInputRef = ref<HTMLInputElement | null>(null)
 const parseError = ref<string | null>(null)
 const errorDialogOpen = ref(false)
 
 // Demo model state
-const demoModel = ref<EdmmDeploymentModel | null>(null)
 const demoLoading = ref(false)
 
 async function openDemoModel() {
   demoLoading.value = true
   try {
     const demoYaml = (await import('@/assets/edmm-models/otelshopAnsible_expected.yaml?raw')).default
-    const result = parseAndValidateEdmm(demoYaml)
-    if (result.success && result.data) {
-      demoModel.value = result.data
-      graphStore.setModel(result.data)
+    const result = graphStore.loadModelFromYaml(demoYaml)
+    if (result.success) {
       viewMode.value = 'demo'
     }
   }
@@ -69,15 +63,12 @@ async function handleLocalFileChange(event: Event) {
   }
 
   parseError.value = null
-  localModel.value = null
 
   try {
     const contents = await file.text()
-    const result = parseAndValidateEdmm(contents)
+    const result = graphStore.loadModelFromYaml(contents)
 
-    if (result.success && result.data) {
-      localModel.value = result.data
-      graphStore.setModel(result.data)
+    if (result.success) {
       viewMode.value = 'local'
     }
     else {
@@ -121,10 +112,8 @@ onMounted(async () => {
   if (import.meta.env.VITE_APP_USE_TEST_YAML) {
     try {
       const testYaml = (await import('@/assets/edmm-models/otelshopAnsible_expected.yaml?raw')).default
-      const result = parseAndValidateEdmm(testYaml)
-      if (result.success && result.data) {
-        localModel.value = result.data
-        graphStore.setModel(result.data)
+      const result = graphStore.loadModelFromYaml(testYaml)
+      if (result.success) {
         viewMode.value = 'local'
       }
       else {
@@ -152,7 +141,7 @@ onMounted(async () => {
     >
 
     <!-- Local File Viewer -->
-    <EdmmGraph v-if="viewMode === 'local' && localModel" :model="localModel" @close="closeGraph" />
+    <EdmmGraph v-if="viewMode === 'local' && graphStore.model" :model="graphStore.model" @close="closeGraph" />
 
     <!-- Transformation Viewer -->
     <EdmmModelLoader
@@ -167,7 +156,7 @@ onMounted(async () => {
     </EdmmModelLoader>
 
     <!-- Demo Model Viewer -->
-    <EdmmGraph v-else-if="viewMode === 'demo' && demoModel" :model="demoModel" @close="closeGraph" />
+    <EdmmGraph v-else-if="viewMode === 'demo' && graphStore.model" :model="graphStore.model" @close="closeGraph" />
 
     <!-- Welcome Screen -->
     <div v-else class="p-8 flex flex-col gap-8 h-full items-center justify-center">

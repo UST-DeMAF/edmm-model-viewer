@@ -10,17 +10,14 @@ const graphStore = useGraphStore()
 const { hiddenRelations, relationTypes, relationTypesHierarchy } = storeToRefs(graphStore)
 
 function isEdgeTypeVisible(edgeType: string): boolean {
-  // Edge is visible if it's NOT in the hidden list
   return !hiddenRelations.value.includes(edgeType)
 }
 
 function toggleEdgeType(edgeType: string): void {
   if (isEdgeTypeVisible(edgeType)) {
-    // Currently visible, add to hidden list
     hiddenRelations.value = [...hiddenRelations.value, edgeType]
   }
   else {
-    // Currently hidden, remove from hidden list
     hiddenRelations.value = hiddenRelations.value.filter(r => r !== edgeType)
   }
 }
@@ -29,7 +26,6 @@ function getIndentation(level: number, extra: number = 0): string {
   return `${(level - 1) * 1 + extra}rem`
 }
 
-// Get the style object for an edge color indicator (with optional dot pattern for textured items)
 function getEdgeColorStyle(item: { color: string, textured?: boolean }): Record<string, string> {
   if (item.textured) {
     return {

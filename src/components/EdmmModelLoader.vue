@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import type { EdmmDeploymentModel } from '~/lib/io'
 import { AlertCircle, FileText, Loader2, Upload } from 'lucide-vue-next'
-import { ref, watch } from 'vue'
-import { parseAndValidateEdmm } from '~/lib/io'
+import { computed, onMounted, ref, watch } from 'vue'
 import { fetchTADM } from '~/services/transformation-service'
 import { useGraphStore } from '~/stores/graph'
 
@@ -15,7 +13,6 @@ const props = defineProps<{
 
 const graphStore = useGraphStore()
 
-const model = ref<EdmmDeploymentModel | null>(null)
 const errorMessage = ref<string | null>(null)
 const loading = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -29,17 +26,13 @@ async function handleFileChange(event: Event) {
 
   loading.value = true
   errorMessage.value = null
-  model.value = null
+  graphStore.clearModel()
 
   try {
     const contents = await file.text()
-    const result = parseAndValidateEdmm(contents)
+    const result = graphStore.loadModelFromYaml(contents)
 
-    if (result.success && result.data) {
-      model.value = result.data
-      graphStore.setModel(result.data)
-    }
-    else {
+    if (!result.success) {
       errorMessage.value = result.errors?.join(' | ') ?? 'Model failed to validate'
     }
   }
@@ -57,17 +50,13 @@ async function handleFileChange(event: Event) {
 async function loadFromBackend(transformationId: string) {
   loading.value = true
   errorMessage.value = null
-  model.value = null
+  graphStore.clearModel()
 
   try {
     const yamlContent = await fetchTADM(transformationId)
-    const result = parseAndValidateEdmm(yamlContent)
+    const result = graphStore.loadModelFromYaml(yamlContent)
 
-    if (result.success && result.data) {
-      model.value = result.data
-      graphStore.setModel(result.data)
-    }
-    else {
+    if (!result.success) {
       errorMessage.value = result.errors?.join(' | ') ?? 'Model failed to validate'
     }
   }
@@ -100,12 +89,8 @@ onMounted(async () => {
     loading.value = true
     try {
       const testYaml = (await import('@/assets/edmm-models/otelshopAnsible_expected.yaml?raw')).default
-      const result = parseAndValidateEdmm(testYaml)
-      if (result.success && result.data) {
-        model.value = result.data
-        graphStore.setModel(result.data)
-      }
-      else {
+      const result = graphStore.loadModelFromYaml(testYaml)
+      if (!result.success) {
         errorMessage.value = result.errors?.join(' | ') ?? 'Model failed to validate'
       }
     }
@@ -116,7 +101,7 @@ onMounted(async () => {
 })
 
 // Expose model for parent components
-defineExpose({ model, loading, errorMessage, loadFromBackend })
+defineExpose({ model: computed(() => graphStore.model), loading, errorMessage, loadFromBackend })
 </script>
 
 <template>
@@ -147,7 +132,7 @@ defineExpose({ model, loading, errorMessage, loadFromBackend })
   </div>
 
   <!-- Model Loaded - Render Slot -->
-  <slot v-else-if="model" :model="model" />
+  <slot v-else-if="graphStore.model" :model="graphStore.model" />
 
   <!-- No Model - File Picker -->
   <div v-else-if="!minimal" class="p-8 flex flex-col gap-6 min-h-[400px] items-center justify-center">

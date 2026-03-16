@@ -1,0 +1,230 @@
+/* Remove default node styling */
+.vue-flow__node-default {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.vue-flow__node-default .vue-flow__node-label {
+  display: none !important;
+}
+
+/* Make edges non-interactable by default so panning works through them */
+.vue-flow__edge {
+  pointer-events: none;
+}
+
+.vue-flow__edge-path,
+.vue-flow__edge-interaction {
+  pointer-events: none;
+}
+
+/* Allow hoverable edges (with metadata) to receive pointer events */
+.vue-flow__edge.edmm-edge--hoverable {
+  pointer-events: auto;
+}
+
+.vue-flow__edge.edmm-edge--hoverable .vue-flow__edge-path,
+.vue-flow__edge.edmm-edge--hoverable .vue-flow__edge-interaction {
+  pointer-events: auto;
+}
+
+/* =============================================
+   Smooth layout transitions
+   ============================================= */
+
+/* Smooth transition for node positions when layout changes */
+.vue-flow__node {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Also animate edges for smoother experience */
+.vue-flow__edge path {
+  transition: d 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =============================================
+   EDMM Node – Theme Variables
+   Theme is INVERTED for better contrast:
+   - In LIGHT mode (no .dark class): use DARK node colors
+   - In DARK mode (.dark class): use LIGHT node colors
+   ============================================= */
+
+/* Default: Dark node colors (used when app is in light mode) */
+.vue-flow__node.edmm-node {
+  --node-background: oklch(0.269 0 0);
+  --node-foreground: oklch(0.985 0 0);
+  --node-border: oklch(0.35 0 0);
+  --node-ring: oklch(0.5 0 0);
+  --node-highlight-bg: oklch(0.627 0.265 303.9);
+}
+
+/* When app is in dark mode: Light node colors */
+.dark .vue-flow__node.edmm-node {
+  --node-background: oklch(0.97 0 0);
+  --node-foreground: oklch(0.205 0 0);
+  --node-border: oklch(0.85 0 0);
+  --node-ring: oklch(0.708 0 0);
+  --node-highlight-bg: oklch(0.828 0.189 84.429);
+}
+
+/* =============================================
+   EDMM Node – Base Styles
+   Uses !important to override Vue Flow defaults
+   ============================================= */
+
+.vue-flow__node.edmm-node {
+  background: var(--node-background) !important;
+  border: 2px solid var(--node-border) !important;
+  border-radius: 12px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  transition:
+    all 0.1s ease-out,
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  overflow: visible !important;
+  padding: 0 10px !important;
+}
+
+.vue-flow__node.edmm-node:hover {
+  border-color: var(--node-ring);
+}
+
+/* Dimmed state for non-highlighted nodes */
+.vue-flow__node.edmm-node.edmm-node--dimmed {
+  opacity: 0.35;
+  filter: grayscale(0.5);
+}
+
+.vue-flow__node.edmm-node.edmm-node--dimmed:hover {
+  opacity: 0.6;
+}
+
+/* Selected node state */
+.vue-flow__node.edmm-node.selected {
+  border-color: oklch(0.597 0.2069 255.56 / 0.7) !important;
+  box-shadow: 0 0 0 5px var(--colors-foreground) !important;
+}
+
+/* Group node styles */
+.vue-flow__node.edmm-node.edmm-node--group {
+  background: color-mix(in oklch, var(--node-background) 50%, transparent);
+  border: 2px dashed var(--node-border);
+  padding: 0;
+}
+
+/* Highlighted node state */
+.vue-flow__node.edmm-node.edmm-node--highlighted {
+  border-color: var(--node-ring);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    0 0 0 2px var(--node-ring);
+}
+
+/* =============================================
+   EDMM Node – Type-Based Coloring
+   ============================================= */
+
+/* Base styles for colored nodes */
+.vue-flow__node.edmm-node.edmm-node--type-colored {
+  border-color: var(--type-color) !important;
+}
+
+/* Light type: dark text, mix with white */
+.vue-flow__node.edmm-node.edmm-node--type-colored.edmm-node--type-light {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--type-color) 60%, white),
+    color-mix(in oklch, var(--type-color) 100%, white)
+  ) !important;
+  --node-foreground: black !important;
+  --node-background: white !important;
+}
+
+/* Dark type: white text, mix with black */
+.vue-flow__node.edmm-node.edmm-node--type-colored.edmm-node--type-dark {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--type-color) 100%, black),
+    color-mix(in oklch, var(--type-color) 60%, black)
+  ) !important;
+  --node-foreground: white !important;
+  --node-background: black !important;
+}
+
+/* Textured variant for overflow types (6th+ type uses dot pattern) - light */
+.vue-flow__node.edmm-node.edmm-node--type-colored.edmm-node--textured.edmm-node--type-light {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 2px, transparent 2px),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--type-color) 60%, white),
+      color-mix(in oklch, var(--type-color) 100%, white)
+    ) !important;
+  background-size:
+    10px 10px,
+    100% 100% !important;
+}
+
+/* Textured variant for overflow types (6th+ type uses dot pattern) - dark */
+.vue-flow__node.edmm-node.edmm-node--type-colored.edmm-node--textured.edmm-node--type-dark {
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.6) 2px, transparent 2px),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--type-color) 100%, black),
+      color-mix(in oklch, var(--type-color) 60%, black)
+    ) !important;
+  background-size:
+    10px 10px,
+    100% 100% !important;
+}
+
+/* =============================================
+   EDMM Node – Shape-Based Differentiation
+   ============================================= */
+
+/* Rectangle - default, no changes needed */
+
+/* Circle shape */
+.vue-flow__node.edmm-node.edmm-node--shape-circle {
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1;
+  justify-content: center;
+}
+
+/* Hexagon shape - uses ::before pseudo-element for clip-path so handles stay at node boundaries */
+.vue-flow__node.edmm-node.edmm-node--shape-hexagon {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 20px !important;
+}
+
+.vue-flow__node.edmm-node.edmm-node--shape-hexagon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+  background: var(--node-background);
+  z-index: -1;
+}
+
+/* Parallelogram shape - uses ::before pseudo-element for clip-path so handles stay at node boundaries */
+.vue-flow__node.edmm-node.edmm-node--shape-parallelogram {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 15px !important;
+}
+
+.vue-flow__node.edmm-node.edmm-node--shape-parallelogram::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
+  background: var(--node-background);
+  z-index: -1;
+}

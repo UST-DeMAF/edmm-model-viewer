@@ -16,9 +16,9 @@ const rangeLabel = computed(() => {
 // Map interaction modes to their helper messages (dynamic based on range)
 const helperMessages = computed<Record<string, string>>(() => ({
   SHORTEST_PATH: 'Click on a node to select it, then hover over another node to show the shortest path between them',
-  HIGHLIGHT_PREDECESSORS: `Hover over a node to highlight ${rangeLabel.value} predecessors`,
-  HIGHLIGHT_SUCCESSORS: `Hover over a node to highlight ${rangeLabel.value} successors`,
-  HIGHLIGHT_NEIGHBOURS: `Hover over a node to highlight ${rangeLabel.value} neighbours`,
+  HIGHLIGHT_PREDECESSORS: `Hover or select a node to highlight ${rangeLabel.value} predecessors`,
+  HIGHLIGHT_SUCCESSORS: `Hover or select a node to highlight ${rangeLabel.value} successors`,
+  HIGHLIGHT_NEIGHBOURS: `Hover or select a node to highlight ${rangeLabel.value} neighbours`,
 }))
 
 // Computed property that returns the message for the current interaction mode

@@ -66,6 +66,9 @@ export default defineConfig({
     }),
 
     VueMacros({
+      betterDefine: {
+        exclude: [/src\/components\/ui\//],
+      },
       plugins: {
         vue: Vue({
           include: [/\.vue$/, /\.md$/],

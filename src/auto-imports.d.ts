@@ -162,7 +162,9 @@ declare global {
   const useDeviceOrientation: typeof import('@vueuse/core')['useDeviceOrientation']
   const useDevicePixelRatio: typeof import('@vueuse/core')['useDevicePixelRatio']
   const useDevicesList: typeof import('@vueuse/core')['useDevicesList']
+  const useDisplayEdges: typeof import('./composables/use-display-edges')['useDisplayEdges']
   const useDisplayMedia: typeof import('@vueuse/core')['useDisplayMedia']
+  const useDisplayNodes: typeof import('./composables/use-display-nodes')['useDisplayNodes']
   const useDocumentVisibility: typeof import('@vueuse/core')['useDocumentVisibility']
   const useDraggable: typeof import('@vueuse/core')['useDraggable']
   const useDropZone: typeof import('@vueuse/core')['useDropZone']
@@ -186,18 +188,19 @@ declare global {
   const useFullscreen: typeof import('@vueuse/core')['useFullscreen']
   const useGamepad: typeof import('@vueuse/core')['useGamepad']
   const useGeolocation: typeof import('@vueuse/core')['useGeolocation']
+  const useGraphInteraction: typeof import('./composables/use-graph-interaction')['useGraphInteraction']
   const useGraphSettingsStore: typeof import('./stores/graph-settings')['useGraphSettingsStore']
   const useGraphStore: typeof import('./stores/graph')['useGraphStore']
   const useHead: typeof import('@unhead/vue')['useHead']
   const useHeadSafe: typeof import('@unhead/vue')['useHeadSafe']
-  const useHighlightRangeScroll: typeof import('./composables/useHighlightRangeScroll')['useHighlightRangeScroll']
-  const useHoveredNode: typeof import('./composables/useHoveredNode')['useHoveredNode']
+  const useHighlightRangeScroll: typeof import('./composables/use-highlight-range-scroll')['useHighlightRangeScroll']
+  const useHoveredNode: typeof import('./composables/use-hovered-node')['useHoveredNode']
   const useI18n: typeof import('vue-i18n')['useI18n']
   const useId: typeof import('vue')['useId']
   const useIdle: typeof import('@vueuse/core')['useIdle']
   const useImage: typeof import('@vueuse/core')['useImage']
   const useInfiniteScroll: typeof import('@vueuse/core')['useInfiniteScroll']
-  const useInteractionModeKeybinds: typeof import('./composables/useInteractionModeKeybinds')['useInteractionModeKeybinds']
+  const useInteractionModeKeybinds: typeof import('./composables/use-interaction-mode-keybinds')['useInteractionModeKeybinds']
   const useIntersectionObserver: typeof import('@vueuse/core')['useIntersectionObserver']
   const useInterval: typeof import('@vueuse/core')['useInterval']
   const useIntervalFn: typeof import('@vueuse/core')['useIntervalFn']
@@ -494,7 +497,9 @@ declare module 'vue' {
     readonly useDeviceOrientation: UnwrapRef<typeof import('@vueuse/core')['useDeviceOrientation']>
     readonly useDevicePixelRatio: UnwrapRef<typeof import('@vueuse/core')['useDevicePixelRatio']>
     readonly useDevicesList: UnwrapRef<typeof import('@vueuse/core')['useDevicesList']>
+    readonly useDisplayEdges: UnwrapRef<typeof import('./composables/use-display-edges')['useDisplayEdges']>
     readonly useDisplayMedia: UnwrapRef<typeof import('@vueuse/core')['useDisplayMedia']>
+    readonly useDisplayNodes: UnwrapRef<typeof import('./composables/use-display-nodes')['useDisplayNodes']>
     readonly useDocumentVisibility: UnwrapRef<typeof import('@vueuse/core')['useDocumentVisibility']>
     readonly useDraggable: UnwrapRef<typeof import('@vueuse/core')['useDraggable']>
     readonly useDropZone: UnwrapRef<typeof import('@vueuse/core')['useDropZone']>
@@ -518,18 +523,19 @@ declare module 'vue' {
     readonly useFullscreen: UnwrapRef<typeof import('@vueuse/core')['useFullscreen']>
     readonly useGamepad: UnwrapRef<typeof import('@vueuse/core')['useGamepad']>
     readonly useGeolocation: UnwrapRef<typeof import('@vueuse/core')['useGeolocation']>
+    readonly useGraphInteraction: UnwrapRef<typeof import('./composables/use-graph-interaction')['useGraphInteraction']>
     readonly useGraphSettingsStore: UnwrapRef<typeof import('./stores/graph-settings')['useGraphSettingsStore']>
     readonly useGraphStore: UnwrapRef<typeof import('./stores/graph')['useGraphStore']>
     readonly useHead: UnwrapRef<typeof import('@unhead/vue')['useHead']>
     readonly useHeadSafe: UnwrapRef<typeof import('@unhead/vue')['useHeadSafe']>
-    readonly useHighlightRangeScroll: UnwrapRef<typeof import('./composables/useHighlightRangeScroll')['useHighlightRangeScroll']>
-    readonly useHoveredNode: UnwrapRef<typeof import('./composables/useHoveredNode')['useHoveredNode']>
+    readonly useHighlightRangeScroll: UnwrapRef<typeof import('./composables/use-highlight-range-scroll')['useHighlightRangeScroll']>
+    readonly useHoveredNode: UnwrapRef<typeof import('./composables/use-hovered-node')['useHoveredNode']>
     readonly useI18n: UnwrapRef<typeof import('vue-i18n')['useI18n']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useIdle: UnwrapRef<typeof import('@vueuse/core')['useIdle']>
     readonly useImage: UnwrapRef<typeof import('@vueuse/core')['useImage']>
     readonly useInfiniteScroll: UnwrapRef<typeof import('@vueuse/core')['useInfiniteScroll']>
-    readonly useInteractionModeKeybinds: UnwrapRef<typeof import('./composables/useInteractionModeKeybinds')['useInteractionModeKeybinds']>
+    readonly useInteractionModeKeybinds: UnwrapRef<typeof import('./composables/use-interaction-mode-keybinds')['useInteractionModeKeybinds']>
     readonly useIntersectionObserver: UnwrapRef<typeof import('@vueuse/core')['useIntersectionObserver']>
     readonly useInterval: UnwrapRef<typeof import('@vueuse/core')['useInterval']>
     readonly useIntervalFn: UnwrapRef<typeof import('@vueuse/core')['useIntervalFn']>

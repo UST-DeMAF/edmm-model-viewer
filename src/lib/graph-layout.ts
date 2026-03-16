@@ -15,11 +15,8 @@ export type LayoutAlgorithm = 'default' | 'layered' | 'force' | 'mrtree'
 export interface LayoutConfig {
   interactionMode: 'NORMAL' | 'HIGHLIGHT_SUCCESSORS' | 'HIGHLIGHT_PREDECESSORS' | 'HIGHLIGHT_NEIGHBOURS' | 'SHORTEST_PATH'
   showEdgeLabels: boolean
-  /** Direction of the graph layout */
   layoutDirection: LayoutDirection
-  /** Whether to scale nodes based on their dependency count */
   scaleWithDependencies: boolean
-  /** Which algorithm to use for layout: 'default' (dagre) or 'layered' (elkjs) */
   layoutAlgorithm: LayoutAlgorithm
 }
 
@@ -28,11 +25,8 @@ export interface EdgeData {
   source: string
   target: string
   label?: string
-  /** Description of the relation (if any) */
   description?: string | null
-  /** Properties defined on the relation */
   properties?: Record<string, unknown>
-  /** Operations defined on the relation */
   operations?: Record<string, unknown>
 }
 
@@ -94,24 +88,16 @@ function runFlatDagreLayout(
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
 
-  // Dagre uses the Sugiyama algorithm (same as ELK's "layered")
-  // Key options:
-  // - rankdir: Direction of layout (TB=top-bottom, LR=left-right, BT, RL)
-  // - ranker: Algorithm for rank assignment ('network-simplex', 'tight-tree', 'longest-path')
-  // - acyclicer: How to handle cycles ('greedy', 'dfs')
-  // - nodesep: Horizontal separation between nodes in the same rank
-  // - ranksep: Separation between ranks/layers
   dagreGraph.setGraph({
     rankdir: config.layoutDirection === 'vertical' ? 'TB' : 'LR',
-    ranker: 'network-simplex', // Same as ELK's default, gives best results
+    ranker: 'network-simplex',
     acyclicer: 'greedy',
-    nodesep: 50, // Spacing between nodes in same layer
-    ranksep: 100, // Spacing between layers (similar to ELK's nodeNodeBetweenLayers)
+    nodesep: 50,
+    ranksep: 100,
     marginx: 20,
     marginy: 20,
   })
 
-  // Add nodes (with scaled dimensions if enabled)
   componentIds.forEach((id) => {
     const scale = nodeScales.get(id) ?? 1
     const width = Math.round(NODE_WIDTH * scale)
@@ -119,10 +105,8 @@ function runFlatDagreLayout(
     dagreGraph.setNode(id, { width, height })
   })
 
-  // Add edges (only enabled relation types)
   if (model.relations) {
     Object.values(model.relations).forEach((relation) => {
-      // Skip if relation type is not in visible relations list
       if (!isRelationVisible(relation.type, hiddenRelations)) {
         return
       }
@@ -131,10 +115,8 @@ function runFlatDagreLayout(
     })
   }
 
-  // Run layout
   dagre.layout(dagreGraph)
 
-  // Extract positioned nodes
   return componentIds.map((id) => {
     const nodeWithPosition = dagreGraph.node(id)
     const component = model.components[id]
@@ -142,7 +124,6 @@ function runFlatDagreLayout(
     const width = Math.round(NODE_WIDTH * scale)
     const height = Math.round(NODE_HEIGHT * scale)
 
-    // Base styling values
     const baseFontSize = 14
     const baseBorderRadius = 12
     const basePaddingV = 12

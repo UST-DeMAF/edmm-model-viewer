@@ -1,6 +1,7 @@
 import type { EdmmDeploymentModel } from '~/lib/io'
 import { defineStore } from 'pinia'
-import { computed, readonly, ref } from 'vue'
+import { computed, ref } from 'vue'
+import { parseAndValidateEdmm } from '~/lib/io'
 
 /**
  * Represents a color pair for nodes with background and brightness type
@@ -316,6 +317,20 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   /**
+   * Parse a YAML string, validate it, and set it as the current model.
+   * Returns a validation result with Success/Errors.
+   */
+  function loadModelFromYaml(yamlContent: string) {
+    const result = parseAndValidateEdmm(yamlContent)
+
+    if (result.success && result.data) {
+      setModel(result.data)
+    }
+
+    return result
+  }
+
+  /**
    * Clear the current model
    */
   function clearModel() {
@@ -434,7 +449,7 @@ export const useGraphStore = defineStore('graph', () => {
   }
 
   return {
-    model: readonly(model),
+    model,
     visibleNodeTypes,
     relationTypes,
     relationTypesHierarchy,
@@ -446,6 +461,7 @@ export const useGraphStore = defineStore('graph', () => {
     parentTypeShapeMap,
     componentTypeShapeMap,
     setModel,
+    loadModelFromYaml,
     clearModel,
     getRelationColor,
     getComponentTypeColor,
