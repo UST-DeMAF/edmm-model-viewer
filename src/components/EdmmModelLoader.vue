@@ -88,7 +88,7 @@ onMounted(async () => {
   if (import.meta.env.VITE_APP_USE_TEST_YAML && !props.transformationId) {
     loading.value = true
     try {
-      const testYaml = (await import('@/assets/edmm-models/otelshopAnsible_expected.yaml?raw')).default
+      const testYaml = (await import('@/assets/edmm-models/t2store-model.yaml?raw')).default
       const result = graphStore.loadModelFromYaml(testYaml)
       if (!result.success) {
         errorMessage.value = result.errors?.join(' | ') ?? 'Model failed to validate'

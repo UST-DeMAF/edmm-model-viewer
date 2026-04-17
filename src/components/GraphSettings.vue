@@ -37,7 +37,17 @@ const graphStore = useGraphStore()
 useInteractionModeKeybinds()
 useHighlightRangeScroll()
 
-const { layoutDirection, layoutAlgorithm, interactionMode, isSearchOpen, typeDifferentiationMode, isSidebarExpanded: isExpanded, showEdgeLabels, highlightRange } = storeToRefs(store)
+const {
+  layoutDirection,
+  layoutAlgorithm,
+  interactionMode,
+  isSearchOpen,
+  typeDifferentiationMode,
+  isSidebarExpanded: isExpanded,
+  showEdgeLabels,
+  highlightRange,
+  scaleWithDependencies,
+} = storeToRefs(store)
 
 // Whether the current interaction mode is one of the highlighting modes (successors, predecessors, neighbours)
 const isHighlightMode = computed(() => {
@@ -125,7 +135,7 @@ onKeyStroke('Alt', (e) => {
               Tree
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
-          <!--           <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
           <DropdownMenuCheckboxItem
             v-model="scaleWithDependencies"
             @select.prevent
@@ -134,7 +144,7 @@ onKeyStroke('Alt', (e) => {
               <i class="i-lucide-scaling size-3.5" />
               Scale with Dependencies
             </span>
-          </DropdownMenuCheckboxItem> -->
+          </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Type Differentiation</DropdownMenuLabel>
           <DropdownMenuRadioGroup v-model="typeDifferentiationMode">

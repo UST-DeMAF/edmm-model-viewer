@@ -109,7 +109,7 @@
 /* Selected node state */
 .vue-flow__node.edmm-node.selected {
   border-color: oklch(0.597 0.2069 255.56 / 0.7) !important;
-  box-shadow: 0 0 0 5px var(--colors-foreground) !important;
+  box-shadow: 0 0 0 5px var(--node-foreground) !important;
 }
 
 /* Group node styles */

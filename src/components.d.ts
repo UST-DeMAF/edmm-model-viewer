@@ -61,7 +61,6 @@ declare module 'vue' {
     EdmmModelLoader: typeof import('./components/EdmmModelLoader.vue')['default']
     EdmmNode: typeof import('./components/graph/EdmmNode.vue')['default']
     ElementInfoPanel: typeof import('./components/ElementInfoPanel.vue')['default']
-    GraphLegend: typeof import('./components/GraphLegend.vue')['default']
     GraphSearch: typeof import('./components/GraphSearch.vue')['default']
     GraphSettings: typeof import('./components/GraphSettings.vue')['default']
     Input: typeof import('./components/ui/input/Input.vue')['default']
@@ -69,10 +68,8 @@ declare module 'vue' {
     Kbd: typeof import('./components/ui/kbd/Kbd.vue')['default']
     KbdGroup: typeof import('./components/ui/kbd/KbdGroup.vue')['default']
     Label: typeof import('./components/ui/label/Label.vue')['default']
-    NodeInfoPanel: typeof import('./components/NodeInfoPanel.vue')['default']
     NodeLegend: typeof import('./components/NodeLegend.vue')['default']
     NodeTypeFilter: typeof import('./components/NodeTypeFilter.vue')['default']
-    README: typeof import('./components/README.md')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Select: typeof import('./components/ui/select/Select.vue')['default']
@@ -94,7 +91,5 @@ declare module 'vue' {
     TooltipTrigger: typeof import('./components/ui/tooltip/TooltipTrigger.vue')['default']
     TransformDialog: typeof import('./components/dialogs/TransformDialog.vue')['default']
     TransformPanel: typeof import('./components/TransformPanel.vue')['default']
-    Tree: typeof import('./components/ui/tree/Tree.vue')['default']
-    TreeItem: typeof import('./components/ui/tree/TreeItem.vue')['default']
   }
 }

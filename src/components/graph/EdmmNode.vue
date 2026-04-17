@@ -23,6 +23,8 @@ const props = defineProps<{
   }
 }>()
 defineEmits(['updateNodeInternals'])
+defineOptions({ inheritAttrs: false })
+
 const store = useGraphSettingsStore()
 const { layoutDirection } = storeToRefs(store)
 
@@ -178,8 +180,8 @@ const highlightedLabel = computed(() => {
   font-size: 20px;
   border-radius: 1000px;
   font-weight: 700;
-  color: var(--colors-background);
-  background: var(--colors-foreground);
+  color: var(--background);
+  background: var(--foreground);
   pointer-events: none;
   z-index: 10;
   line-height: 1;

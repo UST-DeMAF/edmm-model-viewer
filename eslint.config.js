@@ -6,6 +6,7 @@ export default antfu(
     unocss: true,
     formatters: true,
     pnpm: true,
+    ignores: ['src/assets/edmm-models/**/*.yaml'],
   },
   {
     rules: {

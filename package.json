@@ -73,7 +73,6 @@
     "@vue/test-utils": "catalog:dev",
     "beasties": "catalog:build",
     "concurrently": "catalog:dev",
-    "cypress": "catalog:dev",
     "cypress-vite": "catalog:dev",
     "eslint": "catalog:dev",
     "eslint-plugin-cypress": "catalog:dev",

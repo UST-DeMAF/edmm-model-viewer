@@ -190,6 +190,13 @@ const operationsArray = computed(() => {
   })
 })
 
+function getArtifactDisplayValue(artData: unknown) {
+  if (typeof artData === 'object' && artData !== null && 'name' in artData)
+    return artData.name
+
+  return artData
+}
+
 // Parse artifacts into a displayable format (nodes only)
 const artifactsArray = computed(() => {
   if (elementType.value !== 'node')
@@ -300,10 +307,10 @@ const isEmpty = computed(() => {
             <div class="px-2.5 flex flex-col gap-1">
               <div v-for="(typeName, index) in typeHierarchy" :key="typeName" class="flex h-6 items-stretch">
                 <div :style="`width: ${index * 10}px`" class="h-full relative overflow-hidden">
-                  <div class="border border-foreground rounded-md h-full w-[10px] right-0 absolute -translate-x-[50%] -translate-y-[50%]" />
+                  <div class="border border-foreground rounded-md h-full w-[10px] right-0 absolute translate-x-[50%] -translate-y-[50%]" />
                 </div>
                 <span
-                  class="text-xs text-foreground font-mono px-2 py-1 rounded bg-muted" :class="[
+                  class="text-xs text-foreground font-mono px-2 py-1 rounded bg-foreground/3 dark:bg-muted" :class="[
                     index !== typeHierarchy.length - 1 || 'font-semibold',
                   ]"
                 >{{ typeName }}</span>
@@ -414,7 +421,7 @@ const isEmpty = computed(() => {
                     <li v-for="(artifact, idx) in op.artifacts" :key="idx" class="mb-1 flex gap-2">
                       <template v-for="(artData, artType) in artifact" :key="artType">
                         <span class="text-chart-2 font-medium">{{ artType }}:</span>
-                        <span class="font-mono break-all">{{ typeof artData === 'object' && artData && 'name' in artData ? artData?.name : artData }}</span>
+                        <span class="font-mono break-all">{{ getArtifactDisplayValue(artData) }}</span>
                       </template>
                     </li>
                   </ul>

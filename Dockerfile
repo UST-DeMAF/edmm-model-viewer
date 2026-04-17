@@ -29,7 +29,7 @@ COPY --from=build-stage /app/node_modules ./node_modules
 # Copy nginx config and entrypoint
 COPY nginx.template.conf /etc/nginx/nginx.template.conf
 COPY entrypoint.sh ./entrypoint.sh
-RUN chmod +x entrypoint.sh
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 # Create directories for uploads and TADMs
 RUN mkdir -p /usr/share/uploads /usr/share/tadms

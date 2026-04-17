@@ -28,6 +28,7 @@ const props = defineProps<{
   markerEnd?: string
   style?: Record<string, any>
 }>()
+defineOptions({ inheritAttrs: false })
 
 const graphStore = useGraphStore()
 

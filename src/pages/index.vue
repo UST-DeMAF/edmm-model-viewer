@@ -35,7 +35,7 @@ const demoLoading = ref(false)
 async function openDemoModel() {
   demoLoading.value = true
   try {
-    const demoYaml = (await import('@/assets/edmm-models/otelshopAnsible_expected.yaml?raw')).default
+    const demoYaml = (await import('@/assets/edmm-models/t2store-model.yaml?raw')).default
     const result = graphStore.loadModelFromYaml(demoYaml)
     if (result.success) {
       viewMode.value = 'demo'
@@ -111,7 +111,7 @@ onMounted(async () => {
   // Load test YAML in development mode
   if (import.meta.env.VITE_APP_USE_TEST_YAML) {
     try {
-      const testYaml = (await import('@/assets/edmm-models/otelshopAnsible_expected.yaml?raw')).default
+      const testYaml = (await import('@/assets/edmm-models/t2store-model.yaml?raw')).default
       const result = graphStore.loadModelFromYaml(testYaml)
       if (result.success) {
         viewMode.value = 'local'
